@@ -1,0 +1,38 @@
+name: Unpack static app
+
+on:
+  push:
+    paths:
+      - app.zip.b64
+      - .github/workflows/unpack-app.yml
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    if: ${{ hashFiles('app.zip.b64') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Unpack app bundle
+        run: |
+          base64 -d app.zip.b64 > app.zip
+          unzip -o app.zip
+          rm app.zip app.zip.b64
+
+      - name: Commit unpacked app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Deploy Korean learning app"
+            git push
+          fi
