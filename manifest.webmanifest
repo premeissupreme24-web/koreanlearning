@@ -1,14 +1,14 @@
 {
-  "name": "韓語互動教學 App",
-  "short_name": "韓語互動課",
-  "description": "從 40 音到第一段自我介紹的 iPad 韓語互動課。",
+  "name": "æ韩语打仗室",
+  "short_name": "æ韩语打仗室",
+  "description": "iPad 上的韩语手写、听辨、拼读和复习训练室。",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#eef8ff",
-  "theme_color": "#2299df",
+  "background_color": "#EAF8FF",
+  "theme_color": "#29A0E1",
   "icons": [
     {
       "src": "./icons/icon-192.png",

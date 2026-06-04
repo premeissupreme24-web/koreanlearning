@@ -1,19 +1,29 @@
 class WritingBoard {
-  constructor(canvas, getGlyph) {
+  constructor(canvas, getGlyph, options = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.getGlyph = getGlyph;
+    this.getTargetType = options.getTargetType || (() => options.targetType || inferTargetType(this.getGlyph()));
+    this.gridMode = options.gridMode || "rice";
     this.showGuide = true;
     this.isDrawing = false;
     this.last = null;
     this.pointerId = null;
     this.strokes = [];
     this.currentStroke = null;
+    this.startedAt = Date.now();
+    this.logicalWidth = 0;
+    this.logicalHeight = 0;
+    this.replayTimer = null;
     this.bind();
     this.resize();
   }
 
   bind() {
+    this.canvas.style.touchAction = "none";
+    this.canvas.style.userSelect = "none";
+    this.canvas.style.webkitUserSelect = "none";
+    this.canvas.setAttribute("draggable", "false");
     window.addEventListener("resize", () => this.resize());
     this.canvas.addEventListener("pointerdown", (event) => this.startPointer(event));
     this.canvas.addEventListener("pointermove", (event) => this.movePointer(event));
@@ -27,16 +37,69 @@ class WritingBoard {
   resize() {
     const rect = this.canvas.getBoundingClientRect();
     const ratio = window.devicePixelRatio || 1;
+    const oldWidth = this.logicalWidth || rect.width;
+    const oldHeight = this.logicalHeight || rect.height;
     this.canvas.width = Math.max(1, Math.floor(rect.width * ratio));
     this.canvas.height = Math.max(1, Math.floor(rect.height * ratio));
     this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    this.logicalWidth = rect.width;
+    this.logicalHeight = rect.height;
+    this.scaleStrokes(oldWidth, oldHeight, rect.width, rect.height);
     this.redraw();
   }
 
   clear() {
     this.strokes = [];
     this.currentStroke = null;
+    this.startedAt = Date.now();
     this.redraw();
+  }
+
+  undo() {
+    this.strokes.pop();
+    this.redraw();
+  }
+
+  replay() {
+    this.stopReplay();
+    const original = this.strokes.map((stroke) => normalizeLegacyStroke(stroke)).filter(Boolean);
+    if (!original.length) return;
+    const flatSegments = [];
+    original.forEach((stroke) => {
+      const points = stroke.points || [];
+      for (let index = 1; index < points.length; index += 1) {
+        flatSegments.push({ from: points[index - 1], to: points[index], tool: stroke.tool });
+      }
+    });
+    this.redraw();
+    let cursor = 0;
+    this.replayTimer = window.setInterval(() => {
+      const segment = flatSegments[cursor];
+      if (!segment) {
+        this.stopReplay();
+        return;
+      }
+      this.drawSegment(segment.from, segment.to, segment.tool);
+      cursor += 1;
+    }, 18);
+  }
+
+  stopReplay() {
+    if (this.replayTimer) window.clearInterval(this.replayTimer);
+    this.replayTimer = null;
+  }
+
+  saveAttempt(selfRating = "") {
+    if (typeof createHandwritingAttempt !== "function" || typeof recordHandwritingAttempt !== "function") return null;
+    const target = this.getGlyph();
+    const attempt = createHandwritingAttempt({
+      target,
+      targetType: this.getTargetType(),
+      strokes: this.strokes.map((stroke) => normalizeLegacyStroke(stroke)).filter(Boolean),
+      durationMs: Math.max(0, Date.now() - this.startedAt),
+      selfRating
+    });
+    return recordHandwritingAttempt(attempt);
   }
 
   redraw() {
@@ -49,19 +112,16 @@ class WritingBoard {
   drawBackground(width, height) {
     this.ctx.fillStyle = "#fbfcfa";
     this.ctx.fillRect(0, 0, width, height);
-    if (!this.showGuide) return;
 
     this.ctx.save();
-    this.ctx.strokeStyle = "rgba(23,32,42,0.08)";
+    this.drawGrid(width, height);
+    this.drawTargetBadge(width, this.getGlyph());
+    if (!this.showGuide) {
+      this.ctx.restore();
+      return;
+    }
+
     this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([7, 8]);
-    this.ctx.beginPath();
-    this.ctx.moveTo(width / 2, 18);
-    this.ctx.lineTo(width / 2, height - 18);
-    this.ctx.moveTo(18, height / 2);
-    this.ctx.lineTo(width - 18, height / 2);
-    this.ctx.stroke();
-    this.ctx.setLineDash([]);
 
     this.ctx.font = `900 ${Math.min(width, height) * 0.54}px "Noto Sans KR", system-ui`;
     this.ctx.textAlign = "center";
@@ -69,6 +129,51 @@ class WritingBoard {
     this.ctx.fillStyle = "rgba(23,32,42,0.10)";
     this.ctx.fillText(this.getGlyph(), width / 2, height / 2 + 8);
     this.drawStrokeGuide(width, height, this.getGlyph());
+    this.ctx.restore();
+  }
+
+  drawGrid(width, height) {
+    this.ctx.save();
+    this.ctx.strokeStyle = "rgba(23,32,42,0.08)";
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    if (this.gridMode === "lines") {
+      for (let y = height * 0.22; y < height; y += height * 0.18) {
+        this.ctx.moveTo(18, y);
+        this.ctx.lineTo(width - 18, y);
+      }
+    } else {
+      this.ctx.moveTo(width / 2, 18);
+      this.ctx.lineTo(width / 2, height - 18);
+      this.ctx.moveTo(18, height / 2);
+      this.ctx.lineTo(width - 18, height / 2);
+      if (this.gridMode === "rice") {
+        this.ctx.moveTo(22, 22);
+        this.ctx.lineTo(width - 22, height - 22);
+        this.ctx.moveTo(width - 22, 22);
+        this.ctx.lineTo(22, height - 22);
+      }
+    }
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  drawTargetBadge(width, glyph) {
+    this.ctx.save();
+    this.ctx.fillStyle = "rgba(255,255,255,0.9)";
+    this.ctx.strokeStyle = "rgba(255,138,61,0.28)";
+    this.ctx.lineWidth = 1;
+    roundRectPath(this.ctx, 14, 14, Math.min(154, width - 28), 46, 14);
+    this.ctx.fill();
+    this.ctx.stroke();
+    this.ctx.fillStyle = "#ff8a3d";
+    this.ctx.font = "900 13px system-ui";
+    this.ctx.textAlign = "left";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText("TARGET", 28, 37);
+    this.ctx.fillStyle = "#10243f";
+    this.ctx.font = "900 24px 'Noto Sans KR', system-ui";
+    this.ctx.fillText(glyph, 92, 37);
     this.ctx.restore();
   }
 
@@ -83,7 +188,11 @@ class WritingBoard {
       const y1 = line[1] * height;
       const x2 = line[2] * width;
       const y2 = line[3] * height;
-      drawArrow(this.ctx, x1, y1, x2, y2);
+      if (line[4] === "circle") {
+        drawCircleGuide(this.ctx, width / 2, height / 2, Math.min(width, height) * 0.18);
+      } else {
+        drawArrow(this.ctx, x1, y1, x2, y2);
+      }
       this.ctx.beginPath();
       this.ctx.arc(x1, y1, 13, 0, Math.PI * 2);
       this.ctx.fill();
@@ -97,36 +206,31 @@ class WritingBoard {
   }
 
   startPointer(event) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     event.preventDefault();
+    this.stopReplay();
     this.pointerId = event.pointerId;
     this.canvas.setPointerCapture?.(event.pointerId);
     this.isDrawing = true;
     this.last = this.pointFromEvent(event);
-    this.currentStroke = [this.last];
+    this.currentStroke = createStroke(event, this.last);
   }
 
   movePointer(event) {
     if (!this.isDrawing || event.pointerId !== this.pointerId) return;
     event.preventDefault();
     const point = this.pointFromEvent(event);
-    this.ctx.save();
-    this.ctx.strokeStyle = "#17202a";
-    this.ctx.lineWidth = event.pointerType === "pen" ? 4.5 : 6;
-    this.ctx.lineCap = "round";
-    this.ctx.lineJoin = "round";
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.last.x, this.last.y);
-    this.ctx.lineTo(point.x, point.y);
-    this.ctx.stroke();
-    this.ctx.restore();
-    this.currentStroke.push(point);
+    this.drawSegment(this.last, point, pointerTool(event), event);
+    this.currentStroke.points.push(point);
+    this.currentStroke.endedAt = Date.now();
     this.last = point;
   }
 
   endPointer(event) {
     if (event.pointerId !== this.pointerId) return;
     event.preventDefault();
-    if (this.currentStroke && this.currentStroke.length > 1) {
+    if (this.currentStroke && this.currentStroke.points.length > 1) {
+      this.currentStroke.endedAt = Date.now();
       this.strokes.push(this.currentStroke);
     }
     this.isDrawing = false;
@@ -136,27 +240,43 @@ class WritingBoard {
   }
 
   pointFromEvent(event) {
-    const rect = this.canvas.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    };
+    return canvasPointFromEvent(this.canvas, event);
+  }
+
+  drawSegment(from, to, tool = "touch", event = null) {
+    this.ctx.save();
+    this.ctx.strokeStyle = "#17202a";
+    this.ctx.lineWidth = event ? lineWidthForPointer(event, 5.2) : Math.max(2.8, 4.2 + (to.pressure || 0.5) * 3);
+    this.ctx.lineCap = "round";
+    this.ctx.lineJoin = "round";
+    this.ctx.beginPath();
+    this.ctx.moveTo(from.x, from.y);
+    this.ctx.lineTo(to.x, to.y);
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  scaleStrokes(oldWidth, oldHeight, newWidth, newHeight) {
+    if (!oldWidth || !oldHeight || !newWidth || !newHeight || (oldWidth === newWidth && oldHeight === newHeight)) return;
+    const sx = newWidth / oldWidth;
+    const sy = newHeight / oldHeight;
+    this.strokes = this.strokes.map((stroke) => {
+      const normalized = normalizeLegacyStroke(stroke);
+      if (!normalized) return stroke;
+      normalized.points = normalized.points.map((point) => ({ ...point, x: point.x * sx, y: point.y * sy }));
+      return normalized;
+    });
   }
 
   drawStoredStrokes() {
-    this.ctx.save();
-    this.ctx.strokeStyle = "#17202a";
-    this.ctx.lineWidth = 5.5;
-    this.ctx.lineCap = "round";
-    this.ctx.lineJoin = "round";
-    this.strokes.forEach((stroke) => {
-      if (stroke.length < 2) return;
-      this.ctx.beginPath();
-      this.ctx.moveTo(stroke[0].x, stroke[0].y);
-      stroke.slice(1).forEach((point) => this.ctx.lineTo(point.x, point.y));
-      this.ctx.stroke();
+    this.strokes.forEach((rawStroke) => {
+      const stroke = normalizeLegacyStroke(rawStroke);
+      const points = stroke?.points || [];
+      if (points.length < 2) return;
+      for (let index = 1; index < points.length; index += 1) {
+        this.drawSegment(points[index - 1], points[index], stroke.tool);
+      }
     });
-    this.ctx.restore();
   }
 }
 
@@ -170,11 +290,19 @@ class CopyPracticeBoard {
     this.last = null;
     this.pointerId = null;
     this.showStrokes = false;
+    this.startedAt = Date.now();
+    this.logicalWidth = 0;
+    this.logicalHeight = 0;
+    this.replayTimer = null;
     this.bind();
     this.resize();
   }
 
   bind() {
+    this.canvas.style.touchAction = "none";
+    this.canvas.style.userSelect = "none";
+    this.canvas.style.webkitUserSelect = "none";
+    this.canvas.setAttribute("draggable", "false");
     this.canvas.addEventListener("pointerdown", (event) => this.startPointer(event));
     this.canvas.addEventListener("pointermove", (event) => this.movePointer(event));
     this.canvas.addEventListener("pointerup", (event) => this.endPointer(event));
@@ -194,21 +322,68 @@ class CopyPracticeBoard {
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const ratio = window.devicePixelRatio || 1;
+    const oldWidth = this.logicalWidth || rect.width;
+    const oldHeight = this.logicalHeight || rect.height;
     this.canvas.width = Math.floor(rect.width * ratio);
     this.canvas.height = Math.floor(rect.height * ratio);
     this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    this.logicalWidth = rect.width;
+    this.logicalHeight = rect.height;
+    this.scaleStrokes(oldWidth, oldHeight, rect.width, rect.height);
     this.redraw();
   }
 
   clear() {
     this.strokes = [];
     this.currentStroke = null;
+    this.startedAt = Date.now();
     this.redraw();
   }
 
   undo() {
     this.strokes.pop();
     this.redraw();
+  }
+
+  replay() {
+    this.stopReplay();
+    const original = this.strokes.map((stroke) => normalizeLegacyStroke(stroke)).filter(Boolean);
+    if (!original.length) return;
+    const flatSegments = [];
+    original.forEach((stroke) => {
+      const points = stroke.points || [];
+      for (let index = 1; index < points.length; index += 1) {
+        flatSegments.push({ from: points[index - 1], to: points[index], tool: stroke.tool });
+      }
+    });
+    this.redraw();
+    let cursor = 0;
+    this.replayTimer = window.setInterval(() => {
+      const segment = flatSegments[cursor];
+      if (!segment) {
+        this.stopReplay();
+        return;
+      }
+      this.drawSegment(segment.from, segment.to, segment.tool);
+      cursor += 1;
+    }, 16);
+  }
+
+  stopReplay() {
+    if (this.replayTimer) window.clearInterval(this.replayTimer);
+    this.replayTimer = null;
+  }
+
+  saveAttempt(selfRating = "") {
+    if (typeof createHandwritingAttempt !== "function" || typeof recordHandwritingAttempt !== "function") return null;
+    const attempt = createHandwritingAttempt({
+      target: this.item.copyText,
+      targetType: this.item.type === "word" ? "word" : inferTargetType(this.item.copyText),
+      strokes: this.strokes.map((stroke) => normalizeLegacyStroke(stroke)).filter(Boolean),
+      durationMs: Math.max(0, Date.now() - this.startedAt),
+      selfRating
+    });
+    return recordHandwritingAttempt(attempt);
   }
 
   toggleStrokes() {
@@ -312,7 +487,11 @@ class CopyPracticeBoard {
       const y1 = y + line[1] * height;
       const x2 = x + line[2] * width;
       const y2 = y + line[3] * height;
-      drawArrow(this.ctx, x1, y1, x2, y2);
+      if (line[4] === "circle") {
+        drawCircleGuide(this.ctx, x + width / 2, y + height / 2, Math.min(width, height) * 0.18);
+      } else {
+        drawArrow(this.ctx, x1, y1, x2, y2);
+      }
       this.ctx.beginPath();
       this.ctx.arc(x1, y1, 10, 0, Math.PI * 2);
       this.ctx.fill();
@@ -339,34 +518,28 @@ class CopyPracticeBoard {
   startPointer(event) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     event.preventDefault();
+    this.stopReplay();
     this.pointerId = event.pointerId;
     this.canvas.setPointerCapture?.(event.pointerId);
     this.last = this.pointFromEvent(event);
-    this.currentStroke = [this.last];
+    this.currentStroke = createStroke(event, this.last);
   }
 
   movePointer(event) {
     if (event.pointerId !== this.pointerId || !this.currentStroke) return;
     event.preventDefault();
     const point = this.pointFromEvent(event);
-    this.ctx.save();
-    this.ctx.strokeStyle = "#10243f";
-    this.ctx.lineWidth = event.pointerType === "pen" ? 4.2 : 5.6;
-    this.ctx.lineCap = "round";
-    this.ctx.lineJoin = "round";
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.last.x, this.last.y);
-    this.ctx.lineTo(point.x, point.y);
-    this.ctx.stroke();
-    this.ctx.restore();
-    this.currentStroke.push(point);
+    this.drawSegment(this.last, point, pointerTool(event), event);
+    this.currentStroke.points.push(point);
+    this.currentStroke.endedAt = Date.now();
     this.last = point;
   }
 
   endPointer(event) {
     if (event.pointerId !== this.pointerId) return;
     event.preventDefault();
-    if (this.currentStroke && this.currentStroke.length > 1) {
+    if (this.currentStroke && this.currentStroke.points.length > 1) {
+      this.currentStroke.endedAt = Date.now();
       this.strokes.push(this.currentStroke);
     }
     this.pointerId = null;
@@ -375,31 +548,49 @@ class CopyPracticeBoard {
   }
 
   pointFromEvent(event) {
-    const rect = this.canvas.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    };
+    return canvasPointFromEvent(this.canvas, event);
+  }
+
+  drawSegment(from, to, tool = "touch", event = null) {
+    this.ctx.save();
+    this.ctx.strokeStyle = "#10243f";
+    this.ctx.lineWidth = event ? lineWidthForPointer(event, 5.1) : Math.max(2.8, 4 + (to.pressure || 0.5) * 3);
+    this.ctx.lineCap = "round";
+    this.ctx.lineJoin = "round";
+    this.ctx.beginPath();
+    this.ctx.moveTo(from.x, from.y);
+    this.ctx.lineTo(to.x, to.y);
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  scaleStrokes(oldWidth, oldHeight, newWidth, newHeight) {
+    if (!oldWidth || !oldHeight || !newWidth || !newHeight || (oldWidth === newWidth && oldHeight === newHeight)) return;
+    const sx = newWidth / oldWidth;
+    const sy = newHeight / oldHeight;
+    this.strokes = this.strokes.map((stroke) => {
+      const normalized = normalizeLegacyStroke(stroke);
+      if (!normalized) return stroke;
+      normalized.points = normalized.points.map((point) => ({ ...point, x: point.x * sx, y: point.y * sy }));
+      return normalized;
+    });
   }
 
   drawStoredStrokes() {
-    this.ctx.save();
-    this.ctx.strokeStyle = "#10243f";
-    this.ctx.lineWidth = 5.3;
-    this.ctx.lineCap = "round";
-    this.ctx.lineJoin = "round";
-    this.strokes.forEach((stroke) => {
-      if (stroke.length < 2) return;
-      this.ctx.beginPath();
-      this.ctx.moveTo(stroke[0].x, stroke[0].y);
-      stroke.slice(1).forEach((point) => this.ctx.lineTo(point.x, point.y));
-      this.ctx.stroke();
+    this.strokes.forEach((rawStroke) => {
+      const stroke = normalizeLegacyStroke(rawStroke);
+      const points = stroke?.points || [];
+      if (points.length < 2) return;
+      for (let index = 1; index < points.length; index += 1) {
+        this.drawSegment(points[index - 1], points[index], stroke.tool);
+      }
     });
-    this.ctx.restore();
   }
 }
 
 function guideForGlyph(glyph) {
+  const structured = strokeGuideLines(glyph);
+  if (structured.length) return structured;
   const map = {
     "ㄱ": [[0.34, 0.34, 0.66, 0.34], [0.66, 0.34, 0.66, 0.67]],
     "ㄴ": [[0.34, 0.32, 0.34, 0.66], [0.34, 0.66, 0.68, 0.66]],
@@ -432,6 +623,34 @@ function guideForGlyph(glyph) {
   return [[0.36, 0.34, 0.64, 0.34], [0.5, 0.3, 0.5, 0.72]];
 }
 
+function strokeGuideLines(glyph) {
+  if (!glyph || typeof strokeGuideMap === "undefined") return [];
+  const exact = strokeGuideMap[glyph];
+  if (exact) return exact.strokes.map((stroke) => [stroke.start.x, stroke.start.y, stroke.end.x, stroke.end.y, stroke.path || ""]);
+  const firstJamo = [...glyph].find((char) => strokeGuideMap[char]);
+  if (!firstJamo) return [];
+  return strokeGuideMap[firstJamo].strokes.map((stroke) => [stroke.start.x, stroke.start.y, stroke.end.x, stroke.end.y, stroke.path || ""]);
+}
+
+function inferTargetType(target) {
+  const value = typeof target === "function" ? target() : target;
+  if (!value) return "jamo";
+  if ([...value].length > 1) return value.includes(" ") ? "sentence" : "word";
+  const code = value.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3) return "syllable";
+  return "jamo";
+}
+
+function roundRectPath(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
 function drawArrow(ctx, x1, y1, x2, y2) {
   const angle = Math.atan2(y2 - y1, x2 - x1);
   const head = 12;
@@ -443,6 +662,21 @@ function drawArrow(ctx, x1, y1, x2, y2) {
   ctx.moveTo(x2, y2);
   ctx.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6));
   ctx.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCircleGuide(ctx, cx, cy, radius) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, -Math.PI * 0.35, Math.PI * 1.65);
+  ctx.stroke();
+  const angle = Math.PI * 1.65;
+  const x = cx + Math.cos(angle) * radius;
+  const y = cy + Math.sin(angle) * radius;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - 10, y - 3);
+  ctx.lineTo(x - 4, y - 12);
   ctx.closePath();
   ctx.fill();
 }

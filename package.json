@@ -1,0 +1,12 @@
+{
+  "name": "korean-training-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static Korean learning PWA for Hangul, vocabulary, grammar, handwriting, and review.",
+  "scripts": {
+    "lint": "node tools/check-js.js",
+    "build": "node tools/check-js.js",
+    "start": "npx serve ."
+  },
+  "devDependencies": {}
+}

@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#2299df" />
+  <meta name="theme-color" content="#29A0E1" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="韓語互動課" />
+  <meta name="apple-mobile-web-app-title" content="æ韩语打仗室" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>韓語互動教學 App</title>
+  <title>æ韩语打仗室</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link rel="stylesheet" href="./css/styles.css?v=11" />
+  <link rel="stylesheet" href="./css/styles.css?v=13" />
 </head>
 <body>
   <div class="app-shell">
@@ -21,18 +21,23 @@
       <div class="flex items-center gap-3">
         <div class="brand-mark" aria-hidden="true">한</div>
         <div>
-          <p class="text-xs font-black tracking-wide" style="color: var(--teal)" data-i18n="brand.kicker">æ韩语打仗室</p>
-          <h1 class="text-xl font-black leading-tight" data-i18n="brand.title">零基礎互動課</h1>
+          <p class="text-xs font-black tracking-wide" style="color: var(--teal)" data-i18n="brand.kicker">零基礎韓語</p>
+          <h1 class="text-xl font-black leading-tight" data-i18n="brand.title">æ韩语打仗室</h1>
         </div>
       </div>
 
       <nav class="grid gap-2" aria-label="主要單元">
-        <button class="nav-button active" data-view="roadmap"><i class="fa-solid fa-route"></i><span data-i18n="nav.roadmap">課程地圖</span></button>
-        <button class="nav-button" data-view="unit1"><i class="fa-solid fa-pen-nib"></i><span data-i18n="nav.unit1">第一單元</span></button>
+        <button class="nav-button active" data-view="roadmap"><i class="fa-solid fa-house"></i><span data-i18n="nav.roadmap">Dashboard</span></button>
+        <button class="nav-button" data-view="learn"><i class="fa-solid fa-route"></i><span data-i18n="nav.learn">課程地圖</span></button>
+        <button class="nav-button" data-view="lesson"><i class="fa-solid fa-list-check"></i><span data-i18n="nav.lesson">單元學習</span></button>
+        <button class="nav-button" data-view="unit1"><i class="fa-solid fa-pen-nib"></i><span data-i18n="nav.unit1">Hangul</span></button>
         <button class="nav-button" data-view="copybook"><i class="fa-solid fa-table-cells-large"></i><span data-i18n="nav.copybook">手寫本</span></button>
         <button class="nav-button" data-view="vocab"><i class="fa-solid fa-image"></i><span data-i18n="nav.vocab">看圖選字</span></button>
+        <button class="nav-button" data-view="grammar"><i class="fa-solid fa-book-open"></i><span data-i18n="nav.grammar">語法訓練</span></button>
         <button class="nav-button" data-view="unit2"><i class="fa-solid fa-comments"></i><span data-i18n="nav.unit2">第二單元</span></button>
         <button class="nav-button" data-view="review"><i class="fa-solid fa-gamepad"></i><span data-i18n="nav.review">複習挑戰</span></button>
+        <button class="nav-button" data-view="stats"><i class="fa-solid fa-chart-line"></i><span data-i18n="nav.stats">學習統計</span></button>
+        <button class="nav-button" data-view="settings"><i class="fa-solid fa-gear"></i><span data-i18n="nav.settings">設定</span></button>
       </nav>
 
       <div class="progress-box panel p-4 mt-2">
@@ -58,7 +63,7 @@
       </div>
 
       <div class="source-note mt-auto text-xs leading-relaxed" style="color: var(--muted)" data-i18n="source.note">
-        內容以 Seoul Korean 1A 開頭「한글 배우기 / 인사」情境與 Andrew Byon《Basic Korean》初級語法框架改編，避免照搬整頁教材。
+        課程順序參考零基礎韓語教材常見路徑；中文解釋、韓語例句與練習題皆為 App 原創編寫。
       </div>
     </aside>
 
@@ -220,6 +225,14 @@
         </div>
       </section>
 
+      <section id="learn" class="view-section">
+        <div id="learnMap"></div>
+      </section>
+
+      <section id="lesson" class="view-section">
+        <div id="lessonView"></div>
+      </section>
+
       <section id="unit1" class="view-section">
         <div class="grid xl:grid-cols-[1fr_430px] gap-4">
           <article class="panel p-5 md:p-6">
@@ -227,7 +240,7 @@
               <div>
                 <p class="section-kicker" data-i18n="unit1.kicker">第一單元：基礎發音與手寫</p>
                 <h3 class="text-2xl md:text-3xl font-black mt-2" data-i18n="unit1.title">韓文字母 40 音訓練場</h3>
-                <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="unit1.desc">照 Seoul 1A 的入門順序先處理基本母音與子音，再擴充到複合母音與雙子音。</p>
+                <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="unit1.desc">先從基本母音與子音建立聲音感，再擴充到複合母音、送氣音與緊音。</p>
               </div>
               <div class="flex flex-wrap gap-2" id="letterFilters" aria-label="字母分類"></div>
             </div>
@@ -349,13 +362,20 @@
               </div>
               <div class="flex flex-wrap gap-2">
                 <button class="control-button" id="clearPractice"><i class="fa-solid fa-eraser"></i><span data-i18n="actions.clearRewrite">清除重寫</span></button>
+                <button class="control-button" id="undoPractice"><i class="fa-solid fa-rotate-left"></i><span>撤銷</span></button>
                 <button class="control-button" id="toggleGuide"><i class="fa-solid fa-eye"></i><span data-i18n="actions.guides">參考線</span></button>
+                <button class="control-button" id="replayPractice"><i class="fa-solid fa-clock-rotate-left"></i><span>回放</span></button>
                 <button class="control-button primary" id="nextLetter"><i class="fa-solid fa-forward-step"></i><span data-i18n="actions.next">下一個</span></button>
               </div>
             </div>
             <div class="canvas-wrap mt-4">
               <canvas id="practiceCanvas" class="practice-canvas" aria-label="韓文字母手寫板"></canvas>
               <div class="canvas-caption" data-i18n="writing.caption">畫布已鎖定觸控捲動，適合手寫筆尖練習</div>
+            </div>
+            <div class="writing-rating-row mt-3">
+              <button class="control-button" data-practice-rating="again">再練一次</button>
+              <button class="control-button amber" data-practice-rating="okay">還可以</button>
+              <button class="control-button primary" data-practice-rating="good">已掌握</button>
             </div>
           </article>
 
@@ -458,13 +478,17 @@
         </div>
       </section>
 
+      <section id="grammar" class="view-section">
+        <div id="grammarTrackView"></div>
+      </section>
+
       <section id="unit2" class="view-section">
         <div class="panel p-5 md:p-6">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p class="section-kicker" data-i18n="unit2.kicker">第二單元：PDF 核心課程拆解</p>
+              <p class="section-kicker" data-i18n="unit2.kicker">第二單元：原創情境課程</p>
               <h3 class="text-2xl md:text-3xl font-black mt-2" data-i18n="unit2.title">인사：問候與自我介紹</h3>
-              <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="unit2.desc">從 Seoul 1A 第 1 課常見情境出發：打招呼、說名字、國籍、職業。文法支架採 Byon 初級語法中的敬語、主題助詞與系詞。</p>
+              <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="unit2.desc">用原創短句練打招呼、說名字、國籍與職業；文法只取入門級學習順序，不照抄教材例句。</p>
             </div>
             <button class="control-button primary" id="speakUnitDialogue"><i class="fa-solid fa-volume-high"></i><span data-i18n="unit2.playDialogue">播放示範對話</span></button>
           </div>
@@ -512,6 +536,7 @@
               <p class="section-kicker" data-i18n="wrongReview.kicker">錯題複習</p>
               <h3 class="text-2xl font-black mt-1" data-i18n="wrongReview.title">只練自己錯過的題</h3>
               <p id="wrongReviewSummary" class="text-sm leading-relaxed mt-2" style="color: var(--muted)">目前沒有錯題。先去做聽辨、看字母選發音或 의 測驗。</p>
+              <div id="wrongReviewFilters" class="review-filter-row mt-3"></div>
             </div>
             <div class="flex flex-wrap gap-2">
               <button id="newWrongReview" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="wrongReview.new">換錯題</span></button>
@@ -617,23 +642,37 @@
           </article>
         </div>
       </section>
+
+      <section id="stats" class="view-section">
+        <div id="statsView"></div>
+      </section>
+
+      <section id="settings" class="view-section">
+        <div id="settingsView"></div>
+      </section>
     </main>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="./data/letters.js?v=11"></script>
-  <script src="./data/pronunciationRules.js?v=11"></script>
-  <script src="./data/quizItems.js?v=11"></script>
-  <script src="./data/vocabulary.js?v=11"></script>
-  <script src="./data/dialogues.js?v=11"></script>
-  <script src="./js/i18n.js?v=11"></script>
-  <script src="./js/audio.js?v=11"></script>
-  <script src="./js/progress.js?v=11"></script>
-  <script src="./js/canvas.js?v=11"></script>
-  <script src="./js/quizEngine.js?v=11"></script>
-  <script src="./js/copybook.js?v=11"></script>
-  <script src="./js/app.js?v=11"></script>
+  <script src="./data/letters.js?v=13"></script>
+  <script src="./data/strokes.js?v=13"></script>
+  <script src="./data/pronunciationRules.js?v=13"></script>
+  <script src="./data/quizItems.js?v=13"></script>
+  <script src="./data/vocabulary.js?v=13"></script>
+  <script src="./data/dialogues.js?v=13"></script>
+  <script src="./data/grammarTrack.js?v=13"></script>
+  <script src="./data/curriculum.js?v=13"></script>
+  <script src="./js/i18n.js?v=13"></script>
+  <script src="./js/audio.js?v=13"></script>
+  <script src="./js/progress.js?v=13"></script>
+  <script src="./js/pointerUtils.js?v=13"></script>
+  <script src="./js/handwritingStore.js?v=13"></script>
+  <script src="./js/canvas.js?v=13"></script>
+  <script src="./js/exerciseRenderer.js?v=13"></script>
+  <script src="./js/quizEngine.js?v=13"></script>
+  <script src="./js/copybook.js?v=13"></script>
+  <script src="./js/app.js?v=13"></script>
   <script>
     if ("serviceWorker" in navigator && window.isSecureContext) {
       window.addEventListener("load", () => {

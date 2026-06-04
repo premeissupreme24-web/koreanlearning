@@ -1,3 +1,5 @@
+let wrongReviewFilter = "all";
+
 function renderSoundGame() {
   const options = shuffle([...soundGameItems]).slice(0, 3);
   soundGameTarget = options[Math.floor(Math.random() * options.length)];
@@ -209,7 +211,9 @@ function renderEuiQuiz() {
 function renderWrongReview() {
   const summary = document.getElementById("wrongReviewSummary");
   if (!summary) return;
-  const items = [...progress.wrongItems].sort((a, b) => {
+  renderWrongReviewFilters();
+  const filteredWrongItems = (progress.wrongItems || []).filter((item) => wrongReviewFilter === "all" || matchesWrongFilter(item, wrongReviewFilter));
+  const items = [...filteredWrongItems].sort((a, b) => {
     const countDiff = (b.wrongCount || 0) - (a.wrongCount || 0);
     if (countDiff) return countDiff;
     return String(b.lastWrongAt || "").localeCompare(String(a.lastWrongAt || ""));
@@ -268,6 +272,38 @@ function renderWrongReview() {
       }
     });
   });
+}
+
+function renderWrongReviewFilters() {
+  const wrap = document.getElementById("wrongReviewFilters");
+  if (!wrap) return;
+  const filters = [
+    ["all", "全部错题"],
+    ["listening", "只练听辨"],
+    ["grammar", "只练语法"],
+    ["handwriting", "只练手写"],
+    ["vocabulary", "只练单词"]
+  ];
+  wrap.innerHTML = filters.map(([id, label]) => `
+    <button class="review-filter ${wrongReviewFilter === id ? "active" : ""}" data-wrong-filter="${id}">${label}</button>
+  `).join("");
+  wrap.querySelectorAll("[data-wrong-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      wrongReviewFilter = button.dataset.wrongFilter;
+      wrongReviewItemId = null;
+      renderWrongReview();
+    });
+  });
+}
+
+function matchesWrongFilter(item, filter) {
+  const tags = item.errorTags || [];
+  const type = item.itemType || "";
+  if (filter === "listening") return tags.includes("listening") || type.includes("listen") || type.includes("sound");
+  if (filter === "grammar") return tags.some((tag) => tag.includes("particle") || tag === "copula" || tag === "grammar" || tag === "word-order") || type.includes("grammar");
+  if (filter === "handwriting") return tags.includes("spelling") || type.includes("handwriting") || type.includes("dictation");
+  if (filter === "vocabulary") return tags.includes("vocabulary") || type.includes("word") || type.includes("picture");
+  return true;
 }
 
 function renderDictation() {

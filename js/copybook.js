@@ -65,8 +65,12 @@ function renderCopyPractice() {
       <div class="copy-actions">
           <button class="copy-action clear" data-copy-clear="${item.key}"><i class="fa-solid fa-trash-can"></i>${appLanguage === "en" ? "Clear" : "清除"}</button>
           <button class="copy-action" data-copy-undo="${item.key}"><i class="fa-solid fa-rotate-left"></i>${appLanguage === "en" ? "Undo" : "復原"}</button>
+          <button class="copy-action" data-copy-replay="${item.key}"><i class="fa-solid fa-clock-rotate-left"></i>${appLanguage === "en" ? "Replay" : "回放"}</button>
           <button class="copy-action speak" data-copy-speak="${item.speakText}"><i class="fa-solid fa-microphone"></i>${appLanguage === "en" ? "Speak" : "發音"}</button>
           <button class="copy-action strokes" data-copy-strokes="${item.key}"><i class="fa-solid fa-wand-magic-sparkles"></i>${appLanguage === "en" ? "Show Strokes" : "顯示筆順"}</button>
+          <button class="copy-action" data-copy-rate="${item.key}" data-copy-rating="again">${appLanguage === "en" ? "Again" : "再練"}</button>
+          <button class="copy-action" data-copy-rate="${item.key}" data-copy-rating="okay">${appLanguage === "en" ? "Okay" : "還可以"}</button>
+          <button class="copy-action speak" data-copy-rate="${item.key}" data-copy-rating="good">${appLanguage === "en" ? "Mastered" : "已掌握"}</button>
         </div>
         <div class="copy-canvas-wrap">
           <canvas class="copy-canvas" data-copy-canvas="${item.key}" aria-label="${item.copyText} 手寫練習格"></canvas>
@@ -94,6 +98,9 @@ function renderCopyPractice() {
   grid.querySelectorAll("[data-copy-undo]").forEach((button) => {
     button.addEventListener("click", () => copyBoards.get(button.dataset.copyUndo)?.undo());
   });
+  grid.querySelectorAll("[data-copy-replay]").forEach((button) => {
+    button.addEventListener("click", () => copyBoards.get(button.dataset.copyReplay)?.replay());
+  });
   grid.querySelectorAll("[data-copy-strokes]").forEach((button) => {
     button.addEventListener("click", () => {
       const board = copyBoards.get(button.dataset.copyStrokes);
@@ -107,8 +114,34 @@ function renderCopyPractice() {
   });
   grid.querySelectorAll("[data-copy-done]").forEach((button) => {
     button.addEventListener("click", () => {
-      toggleCopyItemLearned(button.dataset.copyDone);
+      const card = button.closest("[data-copy-key]");
+      if (card) copyBoards.get(card.dataset.copyKey)?.saveAttempt("good");
+      markCopyItemLearned(button.dataset.copyDone);
       renderCopyPractice();
+    });
+  });
+  grid.querySelectorAll("[data-copy-rate]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const board = copyBoards.get(button.dataset.copyRate);
+      if (!board) return;
+      const rating = button.dataset.copyRating;
+      board.saveAttempt(rating);
+      if (rating === "again") {
+        recordWrong({
+          exerciseId: `copybook::${board.item.progressKey}`,
+          unitId: "copybook",
+          itemType: "handwriting",
+          prompt: `手写：${board.item.copyText}`,
+          correctAnswer: "已掌握",
+          userAnswer: "再练一次",
+          choices: ["再练一次", "还可以", "已掌握"],
+          speakText: board.item.speakText,
+          errorTags: ["spelling"]
+        });
+      }
+      if (rating === "good") markCopyItemLearned(board.item.progressKey);
+      toast(rating === "good" ? `${board.item.copyText} 已保存並標記掌握。` : rating === "okay" ? `${board.item.copyText} 已保存。` : `${board.item.copyText} 已加入錯字復習。`);
+      if (rating === "good") renderCopyPractice();
     });
   });
 
@@ -193,6 +226,19 @@ function toggleCopyItemLearned(progressKey) {
   if (progress.masteredCards.includes(progressKey)) {
     progress.masteredCards = progress.masteredCards.filter((item) => item !== progressKey);
   } else {
+    progress.masteredCards.push(progressKey);
+  }
+  saveProgress();
+  updateProgressUI();
+}
+
+function markCopyItemLearned(progressKey) {
+  if (progressKey.startsWith("letter:")) {
+    const glyph = progressKey.slice(7);
+    if (!progress.learnedLetters.includes(glyph)) {
+      progress.learnedLetters.push(glyph);
+    }
+  } else if (!progress.masteredCards.includes(progressKey)) {
     progress.masteredCards.push(progressKey);
   }
   saveProgress();
