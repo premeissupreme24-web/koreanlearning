@@ -3,7 +3,7 @@ name: Unpack static app
 on:
   push:
     paths:
-      - app.zip.b64
+      - app.zip.b64.part*
       - .github/workflows/unpack-app.yml
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   unpack:
-    if: ${{ hashFiles('app.zip.b64') != '' }}
+    if: ${{ hashFiles('app.zip.b64.part01') != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,11 +19,12 @@ jobs:
         with:
           persist-credentials: true
 
-      - name: Unpack app bundle
+      - name: Rebuild and unpack app bundle
         run: |
+          cat app.zip.b64.part* > app.zip.b64
           base64 -d app.zip.b64 > app.zip
           unzip -o app.zip
-          rm app.zip app.zip.b64
+          rm app.zip app.zip.b64 app.zip.b64.part*
 
       - name: Commit unpacked app
         run: |
