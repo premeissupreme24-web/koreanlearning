@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2299df" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="韓語互動課" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>韓語互動教學 App</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="./css/styles.css?v=11" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="flex items-center gap-3">
+        <div class="brand-mark" aria-hidden="true">한</div>
+        <div>
+          <p class="text-xs font-black tracking-wide" style="color: var(--teal)" data-i18n="brand.kicker">æ韩语打仗室</p>
+          <h1 class="text-xl font-black leading-tight" data-i18n="brand.title">零基礎互動課</h1>
+        </div>
+      </div>
+
+      <nav class="grid gap-2" aria-label="主要單元">
+        <button class="nav-button active" data-view="roadmap"><i class="fa-solid fa-route"></i><span data-i18n="nav.roadmap">課程地圖</span></button>
+        <button class="nav-button" data-view="unit1"><i class="fa-solid fa-pen-nib"></i><span data-i18n="nav.unit1">第一單元</span></button>
+        <button class="nav-button" data-view="copybook"><i class="fa-solid fa-table-cells-large"></i><span data-i18n="nav.copybook">手寫本</span></button>
+        <button class="nav-button" data-view="vocab"><i class="fa-solid fa-image"></i><span data-i18n="nav.vocab">看圖選字</span></button>
+        <button class="nav-button" data-view="unit2"><i class="fa-solid fa-comments"></i><span data-i18n="nav.unit2">第二單元</span></button>
+        <button class="nav-button" data-view="review"><i class="fa-solid fa-gamepad"></i><span data-i18n="nav.review">複習挑戰</span></button>
+      </nav>
+
+      <div class="progress-box panel p-4 mt-2">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-sm font-black" data-i18n="progress.overall">整體進度</span>
+          <span id="overallProgressText" class="text-sm font-black" style="color: var(--teal)">0%</span>
+        </div>
+        <div class="progress-track mt-3"><div id="overallProgress" class="progress-fill"></div></div>
+        <div class="grid grid-cols-2 gap-2 mt-4 text-sm">
+          <div class="p-3 rounded-lg" style="background: var(--teal-weak); border-radius: 8px">
+            <p class="font-black" id="lettersLearned">0/40</p>
+            <p style="color: var(--muted)" data-i18n="progress.letters">字母掌握</p>
+          </div>
+          <div class="p-3 rounded-lg" style="background: var(--amber-weak); border-radius: 8px">
+            <p class="font-black" id="scoreTotal">0</p>
+            <p style="color: var(--muted)" data-i18n="progress.score">挑戰分數</p>
+          </div>
+          <div class="p-3 rounded-lg col-span-2" style="background: #fff; border: 1px solid var(--line); border-radius: 8px">
+            <p class="font-black" id="wrongItemsCount">0</p>
+            <p style="color: var(--muted)" data-i18n="progress.mistakes">錯題待複習</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="source-note mt-auto text-xs leading-relaxed" style="color: var(--muted)" data-i18n="source.note">
+        內容以 Seoul Korean 1A 開頭「한글 배우기 / 인사」情境與 Andrew Byon《Basic Korean》初級語法框架改編，避免照搬整頁教材。
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <p id="viewKicker" class="section-kicker">Roadmap</p>
+          <h2 id="viewTitle" class="section-title mt-1">從 40 音到第一段自我介紹</h2>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <div class="language-toggle" role="group" aria-label="Language">
+            <button type="button" data-lang="zh" class="active">中文</button>
+            <button type="button" data-lang="en">English</button>
+          </div>
+          <button class="control-button" id="resetProgress"><i class="fa-solid fa-rotate-left"></i><span data-i18n="topbar.reset">重置進度</span></button>
+          <button class="control-button primary" data-view-shortcut="unit1"><i class="fa-solid fa-play"></i><span data-i18n="topbar.start">開始練習</span></button>
+        </div>
+      </div>
+
+      <section id="roadmap" class="view-section active">
+        <article class="roadmap-hero">
+          <div class="hero-content">
+            <p class="section-kicker" data-i18n="roadmap.heroKicker">今日練習</p>
+            <h3 class="hero-title mt-2">
+              <span data-i18n="roadmap.heroTitleLine1">從 40 音</span>
+              <span data-i18n="roadmap.heroTitleLine2">到 142 個生活單字</span>
+            </h3>
+            <p class="hero-subtitle mt-4" data-i18n="roadmap.heroSubtitle">先會認、會寫、會聽 142 個核心單字，再進入問候與自我介紹。</p>
+            <div class="hero-stat-grid mt-5">
+              <div class="hero-stat">
+                <strong id="roadmapLettersLearned">0/40</strong>
+                <span data-i18n="roadmap.statLetters">已掌握字母</span>
+              </div>
+              <div class="hero-stat">
+                <strong id="roadmapWordBank">142</strong>
+                <span data-i18n="roadmap.statWords">同步單字</span>
+              </div>
+              <div class="hero-stat">
+                <strong id="roadmapWrongItems">0</strong>
+                <span data-i18n="roadmap.statMistakes">待複習錯題</span>
+              </div>
+              <div class="hero-stat">
+                <strong id="roadmapScore">0</strong>
+                <span data-i18n="roadmap.statScore">挑戰分數</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3 mt-5">
+              <button class="control-button primary today-button" data-view-shortcut="unit1"><i class="fa-solid fa-play"></i><span data-i18n="roadmap.startToday">開始今天練習</span></button>
+              <button class="control-button" data-view-shortcut="vocab"><i class="fa-solid fa-image"></i><span data-i18n="roadmap.practiceWords">練看圖單字</span></button>
+              <button class="control-button" data-view-shortcut="review"><i class="fa-solid fa-rotate"></i><span data-i18n="roadmap.reviewMistakes">複習錯題</span></button>
+            </div>
+          </div>
+        </article>
+
+        <div class="roadmap-layout">
+          <article class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="roadmap.mapKicker">App 課程地圖</p>
+            <h3 class="text-2xl md:text-3xl font-black mt-2" data-i18n="roadmap.mapTitle">三階段學習閉環</h3>
+            <div class="grid-auto mt-5">
+              <button class="stage-card" data-view-shortcut="unit1">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="stage-visual"><i class="fa-solid fa-pen-fancy"></i></div>
+                  <span class="step-pill" data-i18n="roadmap.stage1Status">推薦開始</span>
+                </div>
+                <div>
+                  <h4 class="font-black" data-i18n="roadmap.stage1Title">階段一：破冰與基礎</h4>
+                  <p class="text-sm leading-relaxed mt-2" style="color: var(--muted)" data-i18n="roadmap.stage1Desc">40 音、筆順、拼讀、聽辨，先建立字母感。</p>
+                </div>
+                <div class="stage-tags">
+                  <span data-i18n="tags.letters">字母</span>
+                  <span data-i18n="tags.spelling">拼讀</span>
+                  <span data-i18n="tags.listening">聽辨</span>
+                </div>
+                <div class="mini-progress"><span id="stageOneProgress"></span></div>
+              </button>
+
+              <button class="stage-card" data-view-shortcut="vocab">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="stage-visual"><i class="fa-solid fa-images"></i></div>
+                  <span class="step-pill" data-i18n="roadmap.stage2Status">下一步</span>
+                </div>
+                <div>
+                  <h4 class="font-black" data-i18n="roadmap.stage2Title">階段二：生活單字閉環</h4>
+                  <p class="text-sm leading-relaxed mt-2" style="color: var(--muted)" data-i18n="roadmap.stage2Desc">看圖選字、聽字選圖、手寫本同步練 142 個常用詞。</p>
+                </div>
+                <div class="stage-tags">
+                  <span data-i18n="tags.words">單字</span>
+                  <span data-i18n="tags.writing">筆順</span>
+                  <span data-i18n="tags.listening">聽辨</span>
+                </div>
+                <div class="mini-progress"><span id="stageTwoProgress"></span></div>
+              </button>
+
+              <button class="stage-card" data-view-shortcut="review">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="stage-visual"><i class="fa-solid fa-gamepad"></i></div>
+                  <span class="step-pill" data-i18n="roadmap.stage3Status">循環複習</span>
+                </div>
+                <div>
+                  <h4 class="font-black" data-i18n="roadmap.stage3Title">階段三：挑戰驗收</h4>
+                  <p class="text-sm leading-relaxed mt-2" style="color: var(--muted)" data-i18n="roadmap.stage3Desc">進入問候、自我介紹、錯題本與複習挑戰，把知道變成會用。</p>
+                </div>
+                <div class="stage-tags">
+                  <span data-i18n="tags.review">複習</span>
+                  <span data-i18n="tags.mistakes">錯題</span>
+                  <span data-i18n="tags.speaking">口說</span>
+                </div>
+                <div class="mini-progress"><span id="stageThreeProgress"></span></div>
+              </button>
+            </div>
+          </article>
+
+          <aside class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="roadmap.pathKicker">學習路徑</p>
+            <h3 class="text-2xl font-black mt-2" data-i18n="roadmap.pathTitle">照順序走，壓力會小很多</h3>
+            <div class="timeline">
+              <button class="timeline-step recommended" data-view-shortcut="unit1">
+                <span class="step-index">1</span>
+                <span>
+                  <span class="font-black block" data-i18n="roadmap.level1Title">Level 1：한글 배우기 / Hangul Basics</span>
+                  <span class="text-sm block mt-1" style="color: var(--muted)" data-i18n="roadmap.level1Desc">先學母音、子音、發音對比。</span>
+                  <span class="step-meta"><span class="step-pill" data-i18n="roadmap.statusRecommended">推薦</span><span class="step-pill" data-i18n="roadmap.time5">5 分鐘</span></span>
+                </span>
+              </button>
+              <button class="timeline-step" data-view-shortcut="copybook">
+                <span class="step-index">2</span>
+                <span>
+                  <span class="font-black block" data-i18n="roadmap.copybookTitle">Copybook：40 音 + 單字手寫本</span>
+                  <span class="text-sm block mt-1" style="color: var(--muted)" data-i18n="roadmap.copybookDesc">40 音和 142 個單字都能用手指或 Apple Pencil 練。</span>
+                  <span class="step-meta"><span class="step-pill" data-i18n="roadmap.statusPractice">練習</span><span class="step-pill" data-i18n="roadmap.time8">8 分鐘</span></span>
+                </span>
+              </button>
+              <button class="timeline-step" data-view-shortcut="vocab">
+                <span class="step-index">3</span>
+                <span>
+                  <span class="font-black block" data-i18n="roadmap.vocabTitle">Vocabulary：142 個看圖 / 聽字 / 手寫同步單字</span>
+                  <span class="text-sm block mt-1" style="color: var(--muted)" data-i18n="roadmap.vocabDesc">動物、身體、食物、日常、顏色、數字混合練。</span>
+                  <span class="step-meta"><span class="step-pill" data-i18n="roadmap.statusPractice">練習</span><span class="step-pill" data-i18n="roadmap.time12">12 分鐘</span></span>
+                </span>
+              </button>
+              <button class="timeline-step" data-view-shortcut="unit2">
+                <span class="step-index">4</span>
+                <span>
+                  <span class="font-black block" data-i18n="roadmap.level2Title">Level 2：인사 / Greetings</span>
+                  <span class="text-sm block mt-1" style="color: var(--muted)" data-i18n="roadmap.level2Desc">進入問候、自我介紹和第一組文法。</span>
+                  <span class="step-meta"><span class="step-pill" data-i18n="roadmap.statusLesson">課程</span><span class="step-pill" data-i18n="roadmap.time10">10 分鐘</span></span>
+                </span>
+              </button>
+              <button class="timeline-step" data-view-shortcut="review">
+                <span class="step-index">5</span>
+                <span>
+                  <span class="font-black block" data-i18n="roadmap.checkpointTitle">Checkpoint：複習挑戰 / Review Challenge</span>
+                  <span class="text-sm block mt-1" style="color: var(--muted)" data-i18n="roadmap.checkpointDesc">只練薄弱點，把錯題拉回來。</span>
+                  <span class="step-meta"><span class="step-pill" data-i18n="roadmap.statusReview">複習</span><span class="step-pill" data-i18n="roadmap.time6">6 分鐘</span></span>
+                </span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="unit1" class="view-section">
+        <div class="grid xl:grid-cols-[1fr_430px] gap-4">
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p class="section-kicker" data-i18n="unit1.kicker">第一單元：基礎發音與手寫</p>
+                <h3 class="text-2xl md:text-3xl font-black mt-2" data-i18n="unit1.title">韓文字母 40 音訓練場</h3>
+                <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="unit1.desc">照 Seoul 1A 的入門順序先處理基本母音與子音，再擴充到複合母音與雙子音。</p>
+              </div>
+              <div class="flex flex-wrap gap-2" id="letterFilters" aria-label="字母分類"></div>
+            </div>
+
+            <div id="letterGrid" class="grid-auto mt-5"></div>
+          </article>
+
+          <aside class="panel p-5 md:p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="letterDetail.kicker">字母發音與聯想</p>
+                <h3 id="selectedLetter" class="text-6xl font-black mt-2" lang="ko">ㄱ</h3>
+              </div>
+              <button class="control-button primary" id="speakLetter"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.speak">發音</span></button>
+            </div>
+            <dl class="grid gap-3 mt-4 text-sm">
+              <div class="p-3 rounded-lg" style="background: var(--teal-weak); border-radius: 8px">
+                <dt class="font-black" data-i18n="letterDetail.roman">羅馬拼音</dt>
+                <dd id="selectedRoman" class="mt-1">g/k</dd>
+              </div>
+            </dl>
+            <div class="mt-4 p-4 border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <div class="flex items-start gap-3">
+                <div class="mini-visual w-24 min-h-24 shrink-0" id="selectedIcon"><i class="fa-solid fa-arrow-turn-down"></i></div>
+                <div>
+                  <h4 class="font-black" data-i18n="letterDetail.mnemonic">圖像記憶</h4>
+                  <p id="selectedMnemonic" class="text-sm leading-relaxed mt-1" style="color: var(--muted)">像一個門角，聲音從喉嚨前緣卡一下再放開。</p>
+                  <p id="selectedExample" class="text-sm font-black mt-2" lang="ko">例：가</p>
+                </div>
+              </div>
+            </div>
+            <button id="markLetterLearned" class="control-button w-full mt-4"><i class="fa-solid fa-check"></i><span data-i18n="letterDetail.mark">標記這個字母已掌握</span></button>
+          </aside>
+        </div>
+
+        <div class="grid xl:grid-cols-3 gap-4 mt-4">
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="visualQuiz.kicker">看字母選發音</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="visualQuiz.title">看得懂，也要選得準</h3>
+              </div>
+              <button id="newVisualQuiz" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+            </div>
+            <div class="mt-4 p-5 text-center border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <p class="text-sm font-black" style="color: var(--muted)" data-i18n="visualQuiz.promptLabel">這個字母的發音是？</p>
+              <p id="visualQuizPrompt" class="text-7xl font-black mt-2" lang="ko">ㄱ</p>
+            </div>
+            <div id="visualQuizChoices" class="grid grid-cols-2 gap-2 mt-4"></div>
+            <p id="visualQuizFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="visualQuiz.feedbackReady">先看字母，再選發音提示。</p>
+          </article>
+
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="vowelQuiz.kicker">元音與複合元音聽辨</p>
+                <h3 class="text-2xl font-black mt-1">ㅐ/ㅔ、왜/웨/외</h3>
+              </div>
+              <button id="newVowelContrast" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+            </div>
+            <p id="vowelContrastPrompt" class="text-sm leading-relaxed mt-3" style="color: var(--muted)" data-i18n="vowelQuiz.promptReady">先按播放，只聽聲音，再選答案。</p>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <button id="playVowelContrast" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.play">播放</span></button>
+            </div>
+            <div id="vowelContrastChoices" class="grid grid-cols-2 gap-2 mt-4"></div>
+            <p id="vowelContrastFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="vowelQuiz.feedbackReady">複合元音先聽輪廓，不急著追求一次全對。</p>
+          </article>
+
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="euiQuiz.kicker">의 專項測驗</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="euiQuiz.title">同一個字，不同位置</h3>
+              </div>
+              <button id="newEuiQuiz" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+            </div>
+            <p id="euiQuizPrompt" class="mt-4 text-lg font-black">의사 中 의 讀作什麼？</p>
+            <div id="euiQuizChoices" class="grid grid-cols-3 gap-2 mt-4"></div>
+            <p id="euiQuizFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="euiQuiz.feedbackReady">選錯會進入錯題本，之後可以只練錯題。</p>
+          </article>
+        </div>
+
+        <div class="grid xl:grid-cols-[1fr_420px] gap-4 mt-4">
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="pronunciation.kicker">影片式發音整理</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="pronunciation.title">先分類，再聽，再寫</h3>
+                <p class="text-sm leading-relaxed mt-2" style="color: var(--muted)" data-i18n="pronunciation.desc">從影片抽出的學習方式：不要一個一個硬背，先把相似音放在同一組比較。點任一卡片會直接播放例音。</p>
+              </div>
+              <button id="playPronunciationSet" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.playAll">播放全部</span></button>
+            </div>
+            <div id="pronunciationCards" class="pronunciation-grid mt-4"></div>
+          </article>
+
+          <aside class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="soundPair.kicker">聽辨對比</p>
+            <h3 class="text-2xl font-black mt-1" data-i18n="soundPair.title">三連音與 ㅇ 尾音</h3>
+            <p id="soundPairPrompt" class="text-sm leading-relaxed mt-2" style="color: var(--muted)">先按播放，只聽聲音，再選你聽到的字。</p>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <button id="newSoundPair" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newSet">換一組</span></button>
+              <button id="playSoundPair" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.play">播放</span></button>
+            </div>
+            <div id="soundPairChoices" class="grid grid-cols-3 gap-2 mt-4"></div>
+            <p id="soundPairFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="soundPair.feedbackReady">這題會像老師在影片裡做的比較練習：同一個母音，只換前面或尾巴。</p>
+            <div class="mt-4 p-4 border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <h4 class="font-black" data-i18n="soundPair.tipTitle">小技巧</h4>
+              <p class="text-sm leading-relaxed mt-2" style="color: var(--muted)" data-i18n="soundPair.tip">送氣音像多一口氣；緊音是喉嚨和口腔先收緊再放開，不是大聲念。</p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="grid xl:grid-cols-[1fr_420px] gap-4 mt-4">
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="writing.kicker">韓語筆順手寫板</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="writing.title">用手指或 Apple Pencil 描寫</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button class="control-button" id="clearPractice"><i class="fa-solid fa-eraser"></i><span data-i18n="actions.clearRewrite">清除重寫</span></button>
+                <button class="control-button" id="toggleGuide"><i class="fa-solid fa-eye"></i><span data-i18n="actions.guides">參考線</span></button>
+                <button class="control-button primary" id="nextLetter"><i class="fa-solid fa-forward-step"></i><span data-i18n="actions.next">下一個</span></button>
+              </div>
+            </div>
+            <div class="canvas-wrap mt-4">
+              <canvas id="practiceCanvas" class="practice-canvas" aria-label="韓文字母手寫板"></canvas>
+              <div class="canvas-caption" data-i18n="writing.caption">畫布已鎖定觸控捲動，適合手寫筆尖練習</div>
+            </div>
+          </article>
+
+          <aside class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="syllable.kicker">拼音機制</p>
+            <h3 class="text-2xl font-black mt-1" data-i18n="syllable.title">子音 + 母音 = 音節</h3>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div>
+                <label class="text-sm font-black" for="onsetSelect" data-i18n="syllable.onset">聲母</label>
+                <select id="onsetSelect" class="w-full mt-2 px-3 py-2 border rounded-lg bg-white" style="border-radius: 8px; border-color: var(--line)"></select>
+              </div>
+              <div>
+                <label class="text-sm font-black" for="vowelSelect" data-i18n="syllable.vowel">韻母</label>
+                <select id="vowelSelect" class="w-full mt-2 px-3 py-2 border rounded-lg bg-white" style="border-radius: 8px; border-color: var(--line)"></select>
+              </div>
+            </div>
+            <div class="mt-4 p-5 text-center border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <p class="text-sm font-black" style="color: var(--muted)" data-i18n="syllable.result">組合結果</p>
+              <p id="syllablePreview" class="text-7xl font-black mt-2" lang="ko">가</p>
+              <button id="speakSyllable" class="control-button primary mt-3"><i class="fa-solid fa-volume-high"></i><span data-i18n="syllable.play">播放音節</span></button>
+            </div>
+            <div class="mt-4">
+              <h4 class="font-black" data-i18n="soundGame.title">聽音辨字</h4>
+              <p class="text-sm mt-1" style="color: var(--muted)" data-i18n="soundGame.desc">點播放後選出你聽到的音節。</p>
+              <div class="flex gap-2 mt-3">
+                <button id="newSoundGame" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+                <button id="playSoundGame" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.play">播放</span></button>
+              </div>
+              <div id="soundChoices" class="grid grid-cols-3 gap-2 mt-3"></div>
+              <p id="soundFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="soundGame.ready">準備好了就播放。</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="copybook" class="view-section">
+        <div class="copybook two-finger-scroll" id="copybookShell">
+          <div class="copy-mode-bar">
+            <button class="copy-mode-button" data-view-shortcut="unit1"><i class="fa-solid fa-xmark"></i><span data-i18n="copybook.close">Close</span></button>
+            <div>
+              <p class="text-sm font-black" style="color: var(--copy-muted)">Hangul Basics</p>
+              <h3 class="text-2xl md:text-3xl font-black leading-tight" id="copyLessonTitle">Pure Vowels Pt.1</h3>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+              <button class="copy-mode-button" id="copyClearAll"><i class="fa-solid fa-trash-can"></i><span data-i18n="copybook.clearAll">Clear All</span></button>
+              <button class="copy-mode-button accent" id="copyAutoplay"><i class="fa-solid fa-volume-high"></i><span data-i18n="copybook.autoplay">Autoplay</span></button>
+              <button class="copy-mode-button accent active" id="copyTwoFinger"><i class="fa-regular fa-hand-pointer"></i><span data-i18n="copybook.twoFinger">2-Finger Scrolling</span></button>
+              <button class="copy-mode-button" id="copyPhoneMode"><i class="fa-solid fa-mobile-screen"></i><span data-i18n="copybook.phoneMode">Phone Mode</span></button>
+              <button class="copy-mode-button done" id="copyComplete"><i class="fa-regular fa-circle-check"></i><span data-i18n="copybook.complete">Complete</span></button>
+            </div>
+          </div>
+
+          <div class="copy-filter-row" id="copyFilters" aria-label="手寫課程分類"></div>
+          <div id="copyPracticeGrid" class="copy-card-grid"></div>
+        </div>
+      </section>
+
+      <section id="vocab" class="view-section">
+        <div class="panel p-5 md:p-6">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="section-kicker" data-i18n="vocab.kicker">圖片單字練習</p>
+              <h3 class="text-2xl md:text-3xl font-black mt-2" data-i18n="vocab.title">看圖選字 / 聽字選圖</h3>
+              <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="vocab.desc">這裡的單字會和手寫本的單字同步：看圖有的，手寫本也能寫；手寫本有的，看圖也會練到。</p>
+            </div>
+          </div>
+
+          <div class="vocab-drill-grid mt-5">
+            <section class="vocab-drill">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p class="section-kicker" data-i18n="pictureWord.kicker">看圖選字</p>
+                  <h4 class="font-black mt-1" data-i18n="pictureWord.title">看圖片，選韓文單字</h4>
+                  <p class="text-sm mt-1" style="color: var(--muted)" data-i18n="pictureWord.desc">動物、身體、食物、顏色、數字混合練。</p>
+                </div>
+                <button id="newPictureWordQuiz" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+              </div>
+              <div id="pictureWordPrompt" class="vocab-picture-prompt mt-3"></div>
+              <div id="pictureWordChoices" class="vocab-word-choice-grid mt-3"></div>
+              <p id="pictureWordFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="pictureWord.feedbackReady">看圖後選出正確韓文，點選時會播放發音。</p>
+            </section>
+
+            <section class="vocab-drill">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p class="section-kicker" data-i18n="listenPicture.kicker">聽字選圖</p>
+                  <h4 class="font-black mt-1" data-i18n="listenPicture.title">聽韓文，選圖片</h4>
+                  <p class="text-sm mt-1" style="color: var(--muted)" data-i18n="listenPicture.desc">先聽聲音，再從圖片中選答案。</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button id="newListenPictureQuiz" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+                  <button id="playListenPictureQuiz" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.play">播放</span></button>
+                </div>
+              </div>
+              <div id="listenPicturePrompt" class="vocab-audio-prompt mt-3"></div>
+              <div id="listenPictureChoices" class="vocab-picture-choice-grid mt-3"></div>
+              <p id="listenPictureFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="listenPicture.feedbackReady">按播放後，選你聽到的圖片。</p>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="unit2" class="view-section">
+        <div class="panel p-5 md:p-6">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="section-kicker" data-i18n="unit2.kicker">第二單元：PDF 核心課程拆解</p>
+              <h3 class="text-2xl md:text-3xl font-black mt-2" data-i18n="unit2.title">인사：問候與自我介紹</h3>
+              <p class="mt-2 leading-relaxed" style="color: var(--muted)" data-i18n="unit2.desc">從 Seoul 1A 第 1 課常見情境出發：打招呼、說名字、國籍、職業。文法支架採 Byon 初級語法中的敬語、主題助詞與系詞。</p>
+            </div>
+            <button class="control-button primary" id="speakUnitDialogue"><i class="fa-solid fa-volume-high"></i><span data-i18n="unit2.playDialogue">播放示範對話</span></button>
+          </div>
+
+          <div class="grid lg:grid-cols-[1fr_1fr] gap-4 mt-5">
+            <article>
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h4 class="text-xl font-black" data-i18n="unit2.flashcards">單字卡 Flashcards</h4>
+                <button class="control-button" id="shuffleCards"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.shuffle">洗牌</span></button>
+              </div>
+              <div id="flashcards" class="grid-auto mt-3"></div>
+            </article>
+
+            <article>
+              <h4 class="text-xl font-black" data-i18n="unit2.grammar">微課堂 Micro-learning</h4>
+              <div id="grammarCards" class="grid gap-3 mt-3"></div>
+            </article>
+          </div>
+        </div>
+
+        <div class="grid xl:grid-cols-[1fr_380px] gap-4 mt-4">
+          <article class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="dialogue.kicker">對話聊天室模式</p>
+            <h3 class="text-2xl font-black mt-1" data-i18n="dialogue.title">點一句，看翻譯與句型</h3>
+            <div id="dialogueList" class="grid gap-3 mt-4"></div>
+          </article>
+
+          <aside class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="dialogueFocus.kicker">句子解析</p>
+            <h3 id="dialogueFocusKo" class="text-3xl font-black mt-2" lang="ko">안녕하세요?</h3>
+            <p id="dialogueFocusZh" class="mt-3 leading-relaxed" style="color: var(--muted)">你好嗎？正式又安全的開場白。</p>
+            <div class="mt-4 p-4 border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <h4 class="font-black" data-i18n="dialogueFocus.breakdown">拆解</h4>
+              <p id="dialogueFocusNote" class="text-sm leading-relaxed mt-2" style="color: var(--muted)">안녕 是安寧，하세요 是禮貌形式。初學先整句記。</p>
+            </div>
+            <button id="speakFocusedLine" class="control-button primary w-full mt-4"><i class="fa-solid fa-volume-high"></i><span data-i18n="dialogueFocus.playLine">播放這一句</span></button>
+          </aside>
+        </div>
+      </section>
+
+      <section id="review" class="view-section">
+        <div class="panel p-5 md:p-6 mb-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p class="section-kicker" data-i18n="wrongReview.kicker">錯題複習</p>
+              <h3 class="text-2xl font-black mt-1" data-i18n="wrongReview.title">只練自己錯過的題</h3>
+              <p id="wrongReviewSummary" class="text-sm leading-relaxed mt-2" style="color: var(--muted)">目前沒有錯題。先去做聽辨、看字母選發音或 의 測驗。</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="newWrongReview" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="wrongReview.new">換錯題</span></button>
+              <button id="playWrongReview" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.play">播放</span></button>
+            </div>
+          </div>
+          <div class="grid lg:grid-cols-[0.9fr_1.1fr] gap-4 mt-4">
+            <div class="p-4 border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <p class="text-sm font-black" style="color: var(--muted)" data-i18n="wrongReview.promptLabel">題目</p>
+              <p id="wrongReviewPrompt" class="text-2xl font-black mt-2">沒有錯題</p>
+              <p id="wrongReviewMeta" class="text-sm mt-2" style="color: var(--muted)">錯題會保存在本機瀏覽器。</p>
+            </div>
+            <div>
+              <div id="wrongReviewChoices" class="grid grid-cols-2 md:grid-cols-3 gap-2"></div>
+              <p id="wrongReviewFeedback" class="text-sm font-black mt-3" style="color: var(--muted)" data-i18n="wrongReview.feedbackReady">答對會降低 wrongCount，連續答對可以移出錯題本。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid xl:grid-cols-[1fr_400px] gap-4">
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="dictation.kicker">聽寫畫布挑戰</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="dictation.title">聽提示，把答案寫出來</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button id="newDictation" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+                <button id="playDictation" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="actions.play">播放</span></button>
+              </div>
+            </div>
+            <p id="dictationPrompt" class="mt-3 font-black" style="color: var(--teal)">先聽發音，再把答案寫出來。</p>
+            <p id="dictationAnswer" class="hidden mt-2 text-3xl font-black" style="color: var(--ink)" lang="ko"></p>
+            <div class="canvas-wrap mt-3">
+              <canvas id="dictationCanvas" class="practice-canvas" aria-label="聽寫手寫板"></canvas>
+              <div class="canvas-caption" data-i18n="dictation.caption">寫完後先自我檢查，再顯示答案</div>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button id="clearDictation" class="control-button"><i class="fa-solid fa-eraser"></i><span data-i18n="actions.clear">清除</span></button>
+              <button id="showDictationAnswer" class="control-button amber"><i class="fa-solid fa-eye"></i><span data-i18n="actions.showAnswer">顯示答案</span></button>
+              <button id="dictationCorrect" class="control-button primary"><i class="fa-solid fa-check"></i><span data-i18n="actions.correct">答對了</span></button>
+              <button id="dictationRetry" class="control-button"><i class="fa-solid fa-rotate-right"></i><span data-i18n="actions.tryAgain">再試一次</span></button>
+            </div>
+          </article>
+
+          <aside class="panel p-5 md:p-6">
+            <p class="section-kicker" data-i18n="shadow.kicker">口說挑戰</p>
+            <h3 class="text-2xl font-black mt-1" data-i18n="shadow.title">Shadowing 跟讀</h3>
+            <div class="mt-4 p-4 border rounded-lg" style="border-radius: 8px; border-color: var(--line)">
+              <p class="text-sm font-black" style="color: var(--muted)" data-i18n="shadow.sentenceLabel">跟讀句</p>
+              <p id="shadowSentence" class="text-2xl font-black mt-2" lang="ko">안녕하세요? 저는 마리예요.</p>
+              <p class="text-sm mt-2" style="color: var(--muted)" data-i18n="shadow.desc">先聽一次，跟著節奏念。此模式用視覺節拍回饋，不會上傳錄音。</p>
+            </div>
+            <div id="shadowBars" class="shadow-bars mt-4" aria-hidden="true"></div>
+            <div class="meter mt-3"><span id="shadowMeter"></span></div>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <button id="startShadow" class="control-button primary"><i class="fa-solid fa-microphone-lines"></i><span data-i18n="shadow.start">開始跟讀</span></button>
+              <button id="finishShadow" class="control-button"><i class="fa-solid fa-check"></i><span data-i18n="actions.finish">完成</span></button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="grid xl:grid-cols-2 gap-4 mt-4">
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="build.kicker">拼音字塊積木</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="build.title">把字母拖到正確位置</h3>
+              </div>
+              <button id="newBuildChallenge" class="control-button"><i class="fa-solid fa-shuffle"></i><span data-i18n="actions.newQuestion">換題</span></button>
+            </div>
+            <p id="buildHint" class="mt-3 text-sm" style="color: var(--muted)">目標：拼出「날」。</p>
+            <div id="buildSlots" class="grid grid-cols-3 gap-3 mt-4"></div>
+            <div id="buildBlocks" class="flex flex-wrap gap-2 mt-4"></div>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <button id="checkBuild" class="control-button primary"><i class="fa-solid fa-check"></i><span data-i18n="actions.check">檢查</span></button>
+              <button id="clearBuild" class="control-button"><i class="fa-solid fa-eraser"></i><span data-i18n="actions.clearAllZh">清空</span></button>
+            </div>
+            <p id="buildFeedback" class="text-sm font-black mt-3" style="color: var(--muted)">拖曳或點選字塊，再點空格也可以。</p>
+          </article>
+
+          <article class="panel p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="section-kicker" data-i18n="grammarQuiz.kicker">聽力與語法題</p>
+                <h3 class="text-2xl font-black mt-1" data-i18n="grammarQuiz.title">選詞與句子重組</h3>
+              </div>
+              <button id="playWordQuiz" class="control-button primary"><i class="fa-solid fa-volume-high"></i><span data-i18n="grammarQuiz.playWord">播放單字</span></button>
+            </div>
+            <div id="wordQuizChoices" class="grid grid-cols-2 gap-2 mt-4"></div>
+            <p id="wordQuizFeedback" class="text-sm font-black mt-3" style="color: var(--muted)">先聽，再選中文意思。</p>
+
+            <div class="mt-6 pt-5 border-t" style="border-color: var(--line)">
+              <p class="font-black">句子重組：我要說「我是學生。」</p>
+              <div id="sentenceSlots" class="grid grid-cols-3 gap-3 mt-3"></div>
+              <div id="sentenceBlocks" class="flex flex-wrap gap-2 mt-4"></div>
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button id="checkSentence" class="control-button primary"><i class="fa-solid fa-check"></i>檢查句子</button>
+                <button id="clearSentence" class="control-button"><i class="fa-solid fa-eraser"></i>清空</button>
+              </div>
+              <p id="sentenceFeedback" class="text-sm font-black mt-3" style="color: var(--muted)">提示：저는 + 학생 + 이에요。</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="./data/letters.js?v=11"></script>
+  <script src="./data/pronunciationRules.js?v=11"></script>
+  <script src="./data/quizItems.js?v=11"></script>
+  <script src="./data/vocabulary.js?v=11"></script>
+  <script src="./data/dialogues.js?v=11"></script>
+  <script src="./js/i18n.js?v=11"></script>
+  <script src="./js/audio.js?v=11"></script>
+  <script src="./js/progress.js?v=11"></script>
+  <script src="./js/canvas.js?v=11"></script>
+  <script src="./js/quizEngine.js?v=11"></script>
+  <script src="./js/copybook.js?v=11"></script>
+  <script src="./js/app.js?v=11"></script>
+  <script>
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+const letterData = [
+  { glyph: "ㄱ", type: "子音", group: "子音 1", roman: "g/k", zhuyin: "ㄍ / ㄎ", sound: "그", example: "가", exampleZh: "ga，像「卡」的前半音", icon: "fa-door-open", mnemonic: "像門角，聲音從喉嚨前緣卡一下再放開。" },
+  { glyph: "ㄴ", type: "子音", group: "子音 1", roman: "n", zhuyin: "ㄋ", sound: "느", example: "나", exampleZh: "我", icon: "fa-arrow-turn-down", mnemonic: "像折好的膝蓋，舌尖頂上排牙齒後方，發 n。" },
+  { glyph: "ㄷ", type: "子音", group: "子音 1", roman: "d/t", zhuyin: "ㄉ / ㄊ", sound: "드", example: "다", exampleZh: "全部、都", icon: "fa-table-cells-large", mnemonic: "像一個打開的盒子，舌尖先擋住再彈開。" },
+  { glyph: "ㄹ", type: "子音", group: "子音 1", roman: "r/l", zhuyin: "ㄌ / 輕 r", sound: "르", example: "라", exampleZh: "ra/la", icon: "fa-water", mnemonic: "像彎彎的水道，舌尖快速滑過，介於 r 和 l。" },
+  { glyph: "ㅁ", type: "子音", group: "子音 1", roman: "m", zhuyin: "ㄇ", sound: "므", example: "마", exampleZh: "嘛", icon: "fa-square", mnemonic: "像閉起來的嘴巴，雙唇合上發 m。" },
+  { glyph: "ㅂ", type: "子音", group: "子音 1", roman: "b/p", zhuyin: "ㄅ / ㄆ", sound: "브", example: "바", exampleZh: "ba", icon: "fa-box-open", mnemonic: "像杯子有底座，雙唇先關住再打開。" },
+  { glyph: "ㅅ", type: "子音", group: "子音 1", roman: "s", zhuyin: "ㄙ", sound: "스", example: "사", exampleZh: "四、買", icon: "fa-mountain", mnemonic: "像山峰，氣流從齒縫滑出去，發 s。" },
+  { glyph: "ㅇ", type: "子音", group: "子音 1", roman: "silent/ng", zhuyin: "零聲母 / ㄥ", sound: "응", example: "아", exampleZh: "啊", icon: "fa-circle", mnemonic: "在母音前是安靜圓圈；在收尾時像 ng。" },
+  { glyph: "ㅈ", type: "子音", group: "子音 1", roman: "j/ch", zhuyin: "ㄐ / ㄑ", sound: "즈", example: "자", exampleZh: "睡吧", icon: "fa-scissors", mnemonic: "像小剪刀，舌面靠近硬顎，發 j/ch。" },
+  { glyph: "ㅎ", type: "子音", group: "子音 1", roman: "h", zhuyin: "ㄏ", sound: "흐", example: "하", exampleZh: "做的語根 하-", icon: "fa-wind", mnemonic: "上方小帽加一口氣，從喉嚨送出 h。" },
+  { glyph: "ㅋ", type: "子音", group: "子音 2", roman: "k", zhuyin: "ㄎ", sound: "크", example: "카", exampleZh: "ka", icon: "fa-wind", mnemonic: "ㄱ 多一畫，表示多一口氣，是送氣 k。" },
+  { glyph: "ㅌ", type: "子音", group: "子音 2", roman: "t", zhuyin: "ㄊ", sound: "트", example: "타", exampleZh: "乘、騎", icon: "fa-wind", mnemonic: "ㄷ 多一畫，像加了氣閥，發送氣 t。" },
+  { glyph: "ㅍ", type: "子音", group: "子音 2", roman: "p", zhuyin: "ㄆ", sound: "프", example: "파", exampleZh: "蔥", icon: "fa-wind", mnemonic: "ㅂ 多一畫，雙唇打開時帶明顯氣流。" },
+  { glyph: "ㅊ", type: "子音", group: "子音 2", roman: "ch", zhuyin: "ㄑ / ㄔ", sound: "츠", example: "차", exampleZh: "車、茶", icon: "fa-wind", mnemonic: "ㅈ 多一畫，像把聲音推出去，發送氣 ch。" },
+  { glyph: "ㄲ", type: "子音", group: "雙子音", roman: "kk", zhuyin: "緊 ㄍ", sound: "끄", example: "까", exampleZh: "緊音 ka", icon: "fa-grip-lines", mnemonic: "兩個 ㄱ 擠在一起，喉嚨與口腔一起用力。" },
+  { glyph: "ㄸ", type: "子音", group: "雙子音", roman: "tt", zhuyin: "緊 ㄉ", sound: "뜨", example: "따", exampleZh: "緊音 ta", icon: "fa-grip-lines", mnemonic: "兩個 ㄷ 疊起來，聲音短、緊、沒有大氣流。" },
+  { glyph: "ㅃ", type: "子音", group: "雙子音", roman: "pp", zhuyin: "緊 ㄅ", sound: "쁘", example: "빠", exampleZh: "緊音 pa", icon: "fa-grip-lines", mnemonic: "雙唇壓得更緊，啪一下但不送氣。" },
+  { glyph: "ㅆ", type: "子音", group: "雙子音", roman: "ss", zhuyin: "緊 ㄙ", sound: "쓰", example: "싸", exampleZh: "便宜", icon: "fa-grip-lines", mnemonic: "兩座山變成更細的氣流，像強化版 s。" },
+  { glyph: "ㅉ", type: "子音", group: "雙子音", roman: "jj", zhuyin: "緊 ㄐ", sound: "쯔", example: "짜", exampleZh: "鹹", icon: "fa-grip-lines", mnemonic: "兩個小剪刀疊在一起，短促有力的 j。" },
+  { glyph: "ㅏ", type: "母音", group: "母音 1", roman: "a", zhuyin: "ㄚ", sound: "아", example: "아", exampleZh: "啊", icon: "fa-arrow-right", mnemonic: "直線旁伸向右邊，嘴巴張開發 a。" },
+  { glyph: "ㅓ", type: "母音", group: "母音 1", roman: "eo", zhuyin: "ㄛ / ㄜ之間", sound: "어", example: "어", exampleZh: "喔、呃", icon: "fa-arrow-left", mnemonic: "短畫伸向左邊，嘴形比 a 收一點。" },
+  { glyph: "ㅗ", type: "母音", group: "母音 1", roman: "o", zhuyin: "ㄛ", sound: "오", example: "오", exampleZh: "五", icon: "fa-arrow-up", mnemonic: "短畫往上，嘴唇圓起來發 o。" },
+  { glyph: "ㅜ", type: "母音", group: "母音 1", roman: "u", zhuyin: "ㄨ", sound: "우", example: "우", exampleZh: "u", icon: "fa-arrow-down", mnemonic: "短畫往下，嘴唇更圓更往前發 u。" },
+  { glyph: "ㅡ", type: "母音", group: "母音 1", roman: "eu", zhuyin: "扁 ㄜ", sound: "으", example: "으", exampleZh: "eu", icon: "fa-minus", mnemonic: "一條平線，嘴巴拉平，喉嚨輕輕出聲。" },
+  { glyph: "ㅣ", type: "母音", group: "母音 1", roman: "i", zhuyin: "ㄧ", sound: "이", example: "이", exampleZh: "這、二", icon: "fa-arrows-up-down", mnemonic: "一條直線，嘴角拉開發 i。" },
+  { glyph: "ㅐ", type: "母音", group: "複合母音", roman: "ae", zhuyin: "ㄝ", sound: "애", example: "애", exampleZh: "孩子", icon: "fa-equals", mnemonic: "ㅏ 加 ㅣ，嘴形從 a 接近 e。" },
+  { glyph: "ㅔ", type: "母音", group: "複合母音", roman: "e", zhuyin: "ㄝ", sound: "에", example: "에", exampleZh: "在、於", icon: "fa-equals", mnemonic: "ㅓ 加 ㅣ，現代發音常和 ㅐ 接近。" },
+  { glyph: "ㅚ", type: "母音", group: "複合母音", roman: "oe/we", zhuyin: "ㄨㄟ", sound: "외", example: "외", exampleZh: "外", icon: "fa-link", mnemonic: "ㅗ 加 ㅣ，很多人念成 we 的感覺。" },
+  { glyph: "ㅟ", type: "母音", group: "複合母音", roman: "wi", zhuyin: "ㄨㄧ", sound: "위", example: "위", exampleZh: "上面", icon: "fa-link", mnemonic: "ㅜ 加 ㅣ，嘴唇先圓再拉開。" },
+  { glyph: "ㅢ", type: "母音", group: "複合母音", roman: "ui", zhuyin: "ㅡ + ㄧ", sound: "의", example: "의", exampleZh: "的", icon: "fa-link", mnemonic: "先扁嘴 ㅡ，再接 i，常因位置有不同弱化。" },
+  { glyph: "ㅑ", type: "母音", group: "母音 2", roman: "ya", zhuyin: "ㄧㄚ", sound: "야", example: "야", exampleZh: "呀", icon: "fa-forward", mnemonic: "ㅏ 多一畫，前面加 y 的滑音。" },
+  { glyph: "ㅕ", type: "母音", group: "母音 2", roman: "yeo", zhuyin: "ㄧㄛ / ㄧㄜ", sound: "여", example: "여", exampleZh: "yeo", icon: "fa-backward", mnemonic: "ㅓ 多一畫，前面加 y 的滑音。" },
+  { glyph: "ㅛ", type: "母音", group: "母音 2", roman: "yo", zhuyin: "ㄧㄛ", sound: "요", example: "요", exampleZh: "禮貌語尾 요", icon: "fa-up-long", mnemonic: "ㅗ 多一畫，變成 yo。" },
+  { glyph: "ㅠ", type: "母音", group: "母音 2", roman: "yu", zhuyin: "ㄧㄨ", sound: "유", example: "유", exampleZh: "yu", icon: "fa-down-long", mnemonic: "ㅜ 多一畫，變成 yu。" },
+  { glyph: "ㅒ", type: "母音", group: "母音 2", roman: "yae", zhuyin: "ㄧㄝ", sound: "얘", example: "얘", exampleZh: "這孩子", icon: "fa-forward-fast", mnemonic: "ㅐ 前面加 y，發 yae。" },
+  { glyph: "ㅖ", type: "母音", group: "母音 2", roman: "ye", zhuyin: "ㄧㄝ", sound: "예", example: "예", exampleZh: "是、禮貌回答", icon: "fa-forward-fast", mnemonic: "ㅔ 前面加 y，發 ye。" },
+  { glyph: "ㅘ", type: "母音", group: "複合母音", roman: "wa", zhuyin: "ㄨㄚ", sound: "와", example: "와", exampleZh: "哇、和", icon: "fa-code-merge", mnemonic: "ㅗ 加 ㅏ，嘴圓後打開成 wa。" },
+  { glyph: "ㅝ", type: "母音", group: "複合母音", roman: "wo", zhuyin: "ㄨㄛ", sound: "워", example: "워", exampleZh: "wo", icon: "fa-code-merge", mnemonic: "ㅜ 加 ㅓ，嘴圓後放成 wo。" },
+  { glyph: "ㅙ", type: "母音", group: "複合母音", roman: "wae", zhuyin: "ㄨㄟ", sound: "왜", example: "왜", exampleZh: "為什麼", icon: "fa-code-merge", mnemonic: "ㅗ + ㅐ，念 wae，常出現在 왜。" },
+  { glyph: "ㅞ", type: "母音", group: "複合母音", roman: "we", zhuyin: "ㄨㄟ", sound: "웨", example: "웨", exampleZh: "we", icon: "fa-code-merge", mnemonic: "ㅜ + ㅔ，念 we，和 ㅙ 現代音接近。" }
+];
+
+letterData.forEach((letter) => {
+  letter.audioUrl = null;
+  letter.slowAudioUrl = null;
+});
+
+let vocabularyCopyData = [
+  { group: "動物單字", ko: "강아지", roman: "gangaji", meaning: "小狗 / puppy", visual: "🐶", strokeGlyph: "ㄱ" },
+  { group: "動物單字", ko: "고양이", roman: "goyangi", meaning: "猫 / cat", visual: "🐱", strokeGlyph: "ㄱ" },
+  { group: "動物單字", ko: "호랑이", roman: "horangi", meaning: "老虎 / tiger", visual: "🐯", strokeGlyph: "ㅎ" },
+  { group: "動物單字", ko: "사자", roman: "saja", meaning: "狮子 / lion", visual: "🦁", strokeGlyph: "ㅅ" },
+  { group: "動物單字", ko: "토끼", roman: "tokki", meaning: "兔子 / rabbit", visual: "🐰", strokeGlyph: "ㅌ" },
+  { group: "動物單字", ko: "햄스터", roman: "haemseuteo", meaning: "仓鼠 / hamster", visual: "🐹", strokeGlyph: "ㅎ" },
+  { group: "動物單字", ko: "새", roman: "sae", meaning: "鸟 / bird", visual: "🐦", strokeGlyph: "ㅅ" },
+  { group: "動物單字", ko: "물고기", roman: "mulgogi", meaning: "鱼 / fish", visual: "🐟", strokeGlyph: "ㅁ" },
+  { group: "動物單字", ko: "거북이", roman: "geobugi", meaning: "乌龟 / turtle", visual: "🐢", strokeGlyph: "ㄱ" },
+  { group: "動物單字", ko: "말", roman: "mal", meaning: "马 / horse", visual: "🐴", strokeGlyph: "ㅁ" },
+  { group: "動物單字", ko: "돼지", roman: "dwaeji", meaning: "猪 / pig", visual: "🐷", strokeGlyph: "ㄷ" },
+  { group: "動物單字", ko: "소", roman: "so", meaning: "牛 / cow", visual: "🐮", strokeGlyph: "ㅅ" },
+  { group: "動物單字", ko: "원숭이", roman: "wonsungi", meaning: "猴子 / monkey", visual: "🐵", strokeGlyph: "ㅇ" },
+  { group: "身體單字", ko: "눈", roman: "nun", meaning: "眼睛 / eye", visual: "👁️", strokeGlyph: "ㄴ" },
+  { group: "身體單字", ko: "코", roman: "ko", meaning: "鼻子 / nose", visual: "👃", strokeGlyph: "ㅋ" },
+  { group: "身體單字", ko: "입", roman: "ip", meaning: "嘴巴 / mouth", visual: "👄", strokeGlyph: "ㅇ" },
+  { group: "身體單字", ko: "손", roman: "son", meaning: "手 / hand", visual: "✋", strokeGlyph: "ㅅ" },
+  { group: "食物單字", ko: "밥", roman: "bap", meaning: "饭 / rice or meal", visual: "🍚", strokeGlyph: "ㅂ" },
+  { group: "食物單字", ko: "물", roman: "mul", meaning: "水 / water", visual: "💧", strokeGlyph: "ㅁ" },
+  { group: "食物單字", ko: "사과", roman: "sagwa", meaning: "苹果 / apple", visual: "🍎", strokeGlyph: "ㅅ" },
+  { group: "食物單字", ko: "우유", roman: "uyu", meaning: "牛奶 / milk", visual: "🥛", strokeGlyph: "ㅇ" },
+  { group: "日常單字", ko: "책", roman: "chaek", meaning: "书 / book", visual: "📘", strokeGlyph: "ㅊ" },
+  { group: "日常單字", ko: "집", roman: "jip", meaning: "家 / house", visual: "🏠", strokeGlyph: "ㅈ" },
+  { group: "日常單字", ko: "가방", roman: "gabang", meaning: "包包 / bag", visual: "🎒", strokeGlyph: "ㄱ" },
+  { group: "日常單字", ko: "전화", roman: "jeonhwa", meaning: "电话 / phone", visual: "📱", strokeGlyph: "ㅈ" },
+  { group: "顏色單字", ko: "빨간색", roman: "ppalgansaek", meaning: "红色 / red", visual: "🟥", strokeGlyph: "ㅃ" },
+  { group: "顏色單字", ko: "파란색", roman: "paransaek", meaning: "蓝色 / blue", visual: "🟦", strokeGlyph: "ㅍ" },
+  { group: "顏色單字", ko: "노란색", roman: "noransaek", meaning: "黄色 / yellow", visual: "🟨", strokeGlyph: "ㄴ" },
+  { group: "數字單字", ko: "하나", roman: "hana", meaning: "一 / one", visual: "1", strokeGlyph: "ㅎ" },
+  { group: "數字單字", ko: "둘", roman: "dul", meaning: "二 / two", visual: "2", strokeGlyph: "ㄷ" },
+  { group: "數字單字", ko: "셋", roman: "set", meaning: "三 / three", visual: "3", strokeGlyph: "ㅅ" }
+];
+
+vocabularyCopyData.forEach((item) => {
+  item.audioUrl = null;
+  item.slowAudioUrl = null;
+});
+
+const letterEnglishHints = {
+  "ㄱ": ["ga, a light g/k sound", "Like a corner: block the sound briefly, then release it."],
+  "ㄴ": ["na, as in 나", "Tongue tip touches behind the upper teeth for n."],
+  "ㄷ": ["da/ta, a light d/t", "Tongue tip closes and pops open."],
+  "ㄹ": ["ra/la", "A quick tap between r and l."],
+  "ㅁ": ["ma", "Close both lips for m."],
+  "ㅂ": ["ba/pa, a light b/p", "Close both lips, then release."],
+  "ㅅ": ["sa", "Air slides through the teeth for s."],
+  "ㅇ": ["silent at the start, ng at the end", "At the start it is a placeholder; at the end it is /ng/."],
+  "ㅈ": ["ja/cha", "Tongue blade moves near the hard palate."],
+  "ㅎ": ["ha", "A breathy throat sound."],
+  "ㅋ": ["ka", "ㄱ with a clear puff of air."],
+  "ㅌ": ["ta", "ㄷ with a clear puff of air."],
+  "ㅍ": ["pa", "ㅂ with a clear puff of air."],
+  "ㅊ": ["cha", "ㅈ with a clear puff of air."],
+  "ㄲ": ["tense kk", "Tighten first, then release a short kk."],
+  "ㄸ": ["tense tt", "Short, tight, and not breathy."],
+  "ㅃ": ["tense pp", "Press both lips tighter before release."],
+  "ㅆ": ["tense ss", "A tighter, sharper s."],
+  "ㅉ": ["tense jj", "A short, tight j sound."],
+  "ㅏ": ["a", "Open your mouth for a."],
+  "ㅓ": ["eo", "A more relaxed, slightly backed vowel."],
+  "ㅗ": ["o", "Round your lips for o."],
+  "ㅜ": ["u", "Round your lips forward for u."],
+  "ㅡ": ["eu", "Keep the mouth flat and relaxed."],
+  "ㅣ": ["i", "Smile slightly for i."],
+  "ㅐ": ["ae", "ㅏ plus ㅣ, close to e in modern speech."],
+  "ㅔ": ["e", "ㅓ plus ㅣ, often close to ㅐ."],
+  "ㅚ": ["oe/we", "ㅗ plus ㅣ, often heard like we."],
+  "ㅟ": ["wi", "Round first, then spread to i."],
+  "ㅢ": ["ui", "Start from flat ㅡ, then glide to i."],
+  "ㅑ": ["ya", "ㅏ with a y-glide."],
+  "ㅕ": ["yeo", "ㅓ with a y-glide."],
+  "ㅛ": ["yo", "ㅗ with a y-glide."],
+  "ㅠ": ["yu", "ㅜ with a y-glide."],
+  "ㅒ": ["yae", "ㅐ with a y-glide."],
+  "ㅖ": ["ye", "ㅔ with a y-glide."],
+  "ㅘ": ["wa", "Round with ㅗ, then open to ㅏ."],
+  "ㅝ": ["wo", "Round with ㅜ, then open to ㅓ."],
+  "ㅙ": ["wae", "ㅗ plus ㅐ."],
+  "ㅞ": ["we", "ㅜ plus ㅔ."]
+};
+
+const CHO = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+const JUNG = ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"];
+const JONG = ["", "ㄱ", "ㄲ", "ㄳ", "ㄴ", "ㄵ", "ㄶ", "ㄷ", "ㄹ", "ㄺ", "ㄻ", "ㄼ", "ㄽ", "ㄾ", "ㄿ", "ㅀ", "ㅁ", "ㅂ", "ㅄ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];

@@ -1,0 +1,7 @@
+_*.png
+_*.jpg
+_*.jpeg
+_*.webp
+
+node_modules/
+.git/
