@@ -980,6 +980,12 @@ function currentLessonModeFor(unitId) {
   return lessonState(unitId) === "review" ? "review" : "learn";
 }
 
+function nextLessonAfter(unitId) {
+  const sequence = courseSequence();
+  const index = sequence.findIndex(({ unit }) => unit.id === unitId);
+  return index >= 0 ? sequence[index + 1] || null : null;
+}
+
 function renderDashboard() {
   const wrap = document.getElementById("roadmap");
   if (!wrap) return;
@@ -1190,16 +1196,37 @@ function renderLessonPage() {
   bindDynamicNavigation(wrap);
   ExerciseRenderer.renderDeck(document.getElementById("lessonExerciseDeck"), lessonExercises, {
     unitId: unit.id,
+    completeLabel: isReview ? "复习完成，进入下一课" : "完成本课，开始复习",
+    completeToast: "",
     onComplete: () => {
       if (isReview) {
         markLessonReviewComplete(unit.id);
-        toast("本课复习完成，可以进入下一课。");
+        const next = nextLessonAfter(unit.id);
+        if (next) {
+          selectedUnitId = next.unit.id;
+          selectedLessonMode = "learn";
+          renderDashboard();
+          renderLearnMap();
+          renderLessonPage();
+          setView("lesson");
+          toast(`复习完成，已进入第 ${lessonNumber(next.unit.id)} 课。`);
+          return;
+        }
+        renderDashboard();
+        renderLearnMap();
+        renderStatsPage();
+        setView("roadmap");
+        toast("全部课程已完成复习。");
+        return;
       } else {
-        toast("本课已完成。请先复习这一课，再进入下一课。");
+        selectedLessonMode = "review";
+        renderDashboard();
+        renderLearnMap();
+        renderLessonPage();
+        setView("lesson");
+        toast("本课已完成，现在开始复习这一课。");
+        return;
       }
-      renderDashboard();
-      renderLearnMap();
-      renderStatsPage();
     }
   });
 }

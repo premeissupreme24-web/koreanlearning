@@ -8,17 +8,19 @@ const ExerciseRenderer = {
     const state = {
       index: options.startIndex || 0,
       unitId: options.unitId || exercises[0]?.unitId || "",
-      onComplete: options.onComplete || null
+      onComplete: options.onComplete || null,
+      completeLabel: options.completeLabel || "保存完成状态",
+      completeToast: options.completeToast === undefined ? "本单元已完成，已经保存到本地进度。" : options.completeToast
     };
 
     const renderCurrent = () => {
       const exercise = exercises[state.index];
       if (!exercise) {
-        container.innerHTML = this.summaryMarkup(state.unitId, exercises);
+        container.innerHTML = this.summaryMarkup(state.unitId, exercises, state.completeLabel);
         container.querySelector("[data-lesson-complete]")?.addEventListener("click", () => {
           markLessonComplete(state.unitId);
           if (state.onComplete) state.onComplete();
-          toast("本单元已完成，已经保存到本地进度。");
+          if (state.completeToast) toast(state.completeToast);
         });
         return;
       }
@@ -353,13 +355,13 @@ const ExerciseRenderer = {
     `;
   },
 
-  summaryMarkup(unitId, exercises) {
+  summaryMarkup(unitId, exercises, completeLabel = "保存完成状态") {
     return `
       <div class="lesson-summary-card">
         <p class="section-kicker">Summary</p>
         <h3 class="text-3xl font-black mt-2">本单元完成</h3>
         <p class="mt-2" style="color: var(--muted)">你完成了 ${exercises.length} 个练习。错题已经自动进入复习。</p>
-        <button class="control-button primary mt-4" data-lesson-complete="${unitId}"><i class="fa-solid fa-check"></i>保存完成状态</button>
+        <button class="control-button primary mt-4" data-lesson-complete="${unitId}"><i class="fa-solid fa-check"></i>${completeLabel}</button>
       </div>
     `;
   }
