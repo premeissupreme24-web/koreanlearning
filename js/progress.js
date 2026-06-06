@@ -4,6 +4,7 @@ const defaultProgress = {
   learnedLetters: [],
   masteredCards: [],
   completedLessons: [],
+  lessonReviews: [],
   exerciseAttempts: [],
   wrongAnswers: [],
   weakTags: {},
@@ -226,7 +227,7 @@ function updateProgressUI() {
   if (roadmapWordBank) roadmapWordBank.textContent = `${vocabTotal}/142`;
   setProgressText("roadmapWrongItems", String(wrongTotal));
   setProgressText("roadmapScore", String(score));
-  setProgressText("dashboardGrammar", `${Object.keys(progress.masteryByItem || {}).filter((key) => key.startsWith("grammar-")).length}/25`);
+  setProgressText("dashboardGrammar", `${Object.keys(progress.masteryByItem || {}).filter((key) => key.startsWith("grammar-")).length}/${Array.isArray(grammarTrack) ? grammarTrack.length : 48}`);
   setProgressText("dashboardStreak", String(progress.streak || 0));
   setProgressText("dashboardDueReviews", String(dueReviewItems().length));
   setProgressWidth("stageOneProgress", `${Math.min(100, Math.round((learnedCount / letterData.length) * 100))}%`, true);
@@ -280,6 +281,7 @@ function loadProgress() {
       ...parsed,
       scores: { ...base.scores, ...(parsed.scores || {}) },
       completedLessons: Array.isArray(parsed.completedLessons) ? parsed.completedLessons : [],
+      lessonReviews: Array.isArray(parsed.lessonReviews) ? parsed.lessonReviews : [],
       exerciseAttempts: Array.isArray(parsed.exerciseAttempts) ? parsed.exerciseAttempts : [],
       weakTags: parsed.weakTags || {},
       streak: parsed.streak || 0,
@@ -309,7 +311,18 @@ function cloneProgressDefault() {
   return JSON.parse(JSON.stringify(defaultProgress));
 }
 
+function markLessonReviewComplete(unitId) {
+  if (!progress.lessonReviews) progress.lessonReviews = [];
+  if (!progress.lessonReviews.includes(unitId)) {
+    progress.lessonReviews.push(unitId);
+  }
+  updateLearningStreak();
+  saveProgress();
+  updateProgressUI();
+}
+
 function saveProgress() {
+  if (!progress.lessonReviews) progress.lessonReviews = [];
   progress.wrongAnswers = progress.wrongItems;
   recomputeWeakTags();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));

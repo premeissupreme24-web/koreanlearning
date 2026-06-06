@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link rel="stylesheet" href="./css/styles.css?v=13" />
+  <link rel="stylesheet" href="./css/styles.css?v=15" />
 </head>
 <body>
   <div class="app-shell">
@@ -26,18 +26,17 @@
         </div>
       </div>
 
-      <nav class="grid gap-2" aria-label="主要單元">
-        <button class="nav-button active" data-view="roadmap"><i class="fa-solid fa-house"></i><span data-i18n="nav.roadmap">Dashboard</span></button>
-        <button class="nav-button" data-view="learn"><i class="fa-solid fa-route"></i><span data-i18n="nav.learn">課程地圖</span></button>
-        <button class="nav-button" data-view="lesson"><i class="fa-solid fa-list-check"></i><span data-i18n="nav.lesson">單元學習</span></button>
-        <button class="nav-button" data-view="unit1"><i class="fa-solid fa-pen-nib"></i><span data-i18n="nav.unit1">Hangul</span></button>
-        <button class="nav-button" data-view="copybook"><i class="fa-solid fa-table-cells-large"></i><span data-i18n="nav.copybook">手寫本</span></button>
-        <button class="nav-button" data-view="vocab"><i class="fa-solid fa-image"></i><span data-i18n="nav.vocab">看圖選字</span></button>
-        <button class="nav-button" data-view="grammar"><i class="fa-solid fa-book-open"></i><span data-i18n="nav.grammar">語法訓練</span></button>
-        <button class="nav-button" data-view="unit2"><i class="fa-solid fa-comments"></i><span data-i18n="nav.unit2">第二單元</span></button>
-        <button class="nav-button" data-view="review"><i class="fa-solid fa-gamepad"></i><span data-i18n="nav.review">複習挑戰</span></button>
-        <button class="nav-button" data-view="stats"><i class="fa-solid fa-chart-line"></i><span data-i18n="nav.stats">學習統計</span></button>
-        <button class="nav-button" data-view="settings"><i class="fa-solid fa-gear"></i><span data-i18n="nav.settings">設定</span></button>
+      <nav class="grid gap-2" aria-label="主要单元">
+        <button class="nav-button active" data-view="roadmap"><i class="fa-solid fa-house"></i><span data-i18n="nav.roadmap">当前课程</span></button>
+        <button class="nav-button" data-view="learn"><i class="fa-solid fa-route"></i><span data-i18n="nav.learn">课程地图</span></button>
+        <button class="nav-button" data-view="lesson"><i class="fa-solid fa-list-check"></i><span data-i18n="nav.lesson">课堂练习</span></button>
+        <button class="nav-button" data-view="review"><i class="fa-solid fa-rotate"></i><span data-i18n="nav.review">课后复习</span></button>
+        <button class="nav-button" data-view="unit1"><i class="fa-solid fa-volume-high"></i><span data-i18n="nav.unit1">发音训练</span></button>
+        <button class="nav-button" data-view="grammar"><i class="fa-solid fa-book-open"></i><span data-i18n="nav.grammar">语法</span></button>
+        <button class="nav-button" data-view="vocab"><i class="fa-solid fa-image"></i><span data-i18n="nav.vocab">单词</span></button>
+        <button class="nav-button" data-view="copybook"><i class="fa-solid fa-table-cells-large"></i><span data-i18n="nav.copybook">手写本</span></button>
+        <button class="nav-button" data-view="stats"><i class="fa-solid fa-chart-line"></i><span data-i18n="nav.stats">学习统计</span></button>
+        <button class="nav-button" data-view="settings"><i class="fa-solid fa-gear"></i><span data-i18n="nav.settings">设置</span></button>
       </nav>
 
       <div class="progress-box panel p-4 mt-2">
@@ -71,7 +70,7 @@
       <div class="topbar">
         <div>
           <p id="viewKicker" class="section-kicker">Roadmap</p>
-          <h2 id="viewTitle" class="section-title mt-1">從 40 音到第一段自我介紹</h2>
+          <h2 id="viewTitle" class="section-title mt-1">从第 1 课开始</h2>
         </div>
         <div class="flex flex-wrap gap-2 items-center">
           <div class="language-toggle" role="group" aria-label="Language">
@@ -79,7 +78,7 @@
             <button type="button" data-lang="en">English</button>
           </div>
           <button class="control-button" id="resetProgress"><i class="fa-solid fa-rotate-left"></i><span data-i18n="topbar.reset">重置進度</span></button>
-          <button class="control-button primary" data-view-shortcut="unit1"><i class="fa-solid fa-play"></i><span data-i18n="topbar.start">開始練習</span></button>
+          <button class="control-button primary" data-view-shortcut="lesson"><i class="fa-solid fa-play"></i><span data-i18n="topbar.start">开始当前课</span></button>
         </div>
       </div>
 
@@ -655,24 +654,26 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="./data/letters.js?v=13"></script>
-  <script src="./data/strokes.js?v=13"></script>
-  <script src="./data/pronunciationRules.js?v=13"></script>
-  <script src="./data/quizItems.js?v=13"></script>
-  <script src="./data/vocabulary.js?v=13"></script>
-  <script src="./data/dialogues.js?v=13"></script>
-  <script src="./data/grammarTrack.js?v=13"></script>
-  <script src="./data/curriculum.js?v=13"></script>
-  <script src="./js/i18n.js?v=13"></script>
-  <script src="./js/audio.js?v=13"></script>
-  <script src="./js/progress.js?v=13"></script>
-  <script src="./js/pointerUtils.js?v=13"></script>
-  <script src="./js/handwritingStore.js?v=13"></script>
-  <script src="./js/canvas.js?v=13"></script>
-  <script src="./js/exerciseRenderer.js?v=13"></script>
-  <script src="./js/quizEngine.js?v=13"></script>
-  <script src="./js/copybook.js?v=13"></script>
-  <script src="./js/app.js?v=13"></script>
+  <script src="./data/letters.js?v=15"></script>
+  <script src="./data/strokes.js?v=15"></script>
+  <script src="./data/pronunciationRules.js?v=15"></script>
+  <script src="./data/quizItems.js?v=15"></script>
+  <script src="./data/vocabulary.js?v=15"></script>
+  <script src="./data/dialogues.js?v=15"></script>
+  <script src="./data/grammarTrack.js?v=15"></script>
+  <script src="./data/verbs.js?v=15"></script>
+  <script src="./data/topikQuestions.js?v=15"></script>
+  <script src="./data/curriculum.js?v=15"></script>
+  <script src="./js/i18n.js?v=15"></script>
+  <script src="./js/audio.js?v=15"></script>
+  <script src="./js/progress.js?v=15"></script>
+  <script src="./js/pointerUtils.js?v=15"></script>
+  <script src="./js/handwritingStore.js?v=15"></script>
+  <script src="./js/canvas.js?v=15"></script>
+  <script src="./js/exerciseRenderer.js?v=15"></script>
+  <script src="./js/quizEngine.js?v=15"></script>
+  <script src="./js/copybook.js?v=15"></script>
+  <script src="./js/app.js?v=15"></script>
   <script>
     if ("serviceWorker" in navigator && window.isSecureContext) {
       window.addEventListener("load", () => {

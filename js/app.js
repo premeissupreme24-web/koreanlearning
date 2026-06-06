@@ -18,6 +18,7 @@ let listenPictureTarget = null;
 let shadowIndex = 0;
 let shadowTimer = null;
 let selectedUnitId = "unit-0-1";
+let selectedLessonMode = "learn";
 let copyPracticeMode = "母音 1";
 let copyTwoFingerScroll = true;
 let copyAutoplayTimer = null;
@@ -935,21 +936,300 @@ function bindWritingDockControls(root, target, unit) {
   });
 }
 
+function courseSequence() {
+  return courseLevels.flatMap((level) => level.units.map((unit) => ({ level, unit })));
+}
+
+function lessonState(unitId) {
+  const completed = progress.completedLessons.includes(unitId);
+  const reviewed = (progress.lessonReviews || []).includes(unitId);
+  if (!completed) return "learn";
+  if (!reviewed) return "review";
+  return "done";
+}
+
+function currentLessonStep() {
+  const sequence = courseSequence();
+  return sequence.find(({ unit }) => lessonState(unit.id) !== "done") || sequence[sequence.length - 1];
+}
+
+function lessonNumber(unitId) {
+  return Math.max(1, courseSequence().findIndex(({ unit }) => unit.id === unitId) + 1);
+}
+
+function canOpenUnit(unitId) {
+  const sequence = courseSequence();
+  const index = sequence.findIndex(({ unit }) => unit.id === unitId);
+  if (index <= 0) return true;
+  const previous = sequence[index - 1].unit;
+  return lessonState(previous.id) === "done" || progress.completedLessons.includes(unitId);
+}
+
+function nextLockedReason(unitId) {
+  const sequence = courseSequence();
+  const index = sequence.findIndex(({ unit }) => unit.id === unitId);
+  if (index <= 0) return "";
+  const previous = sequence[index - 1].unit;
+  const state = lessonState(previous.id);
+  if (state === "learn") return `先学完第 ${lessonNumber(previous.id)} 课`;
+  if (state === "review") return `先复习第 ${lessonNumber(previous.id)} 课`;
+  return "";
+}
+
+function currentLessonModeFor(unitId) {
+  return lessonState(unitId) === "review" ? "review" : "learn";
+}
+
+function renderDashboard() {
+  const wrap = document.getElementById("roadmap");
+  if (!wrap) return;
+  const current = currentLessonStep();
+  selectedUnitId = current.unit.id;
+  selectedLessonMode = currentLessonModeFor(current.unit.id);
+  const state = lessonState(current.unit.id);
+  const sequence = courseSequence();
+  const currentIndex = sequence.findIndex(({ unit }) => unit.id === current.unit.id);
+  const completedCount = sequence.filter(({ unit }) => lessonState(unit.id) === "done").length;
+  const lessonExercises = exercisesForUnit(current.unit.id);
+  const modeText = state === "review" ? "先复习这一课，再进入下一课" : "今天只学这一课，不跳到后面";
+  const actionText = state === "review" ? "复习本课" : "开始本课";
+  const primaryIcon = state === "review" ? "fa-rotate" : "fa-play";
+  wrap.innerHTML = `
+    <section class="beginner-home">
+      <article class="beginner-hero panel">
+        <div class="lesson-badge">第 ${lessonNumber(current.unit.id)} 课</div>
+        <p class="section-kicker">从 0 开始</p>
+        <h3>${current.unit.title}</h3>
+        <p>${modeText}。顺序是：元音/辅音 → 发音 → 手写 → 小测 → 课后复习。</p>
+        <div class="beginner-actions">
+          <button class="control-button primary" data-open-current="${current.unit.id}" data-open-mode="${currentLessonModeFor(current.unit.id)}"><i class="fa-solid ${primaryIcon}"></i>${actionText}</button>
+          <button class="control-button" data-view-shortcut="learn"><i class="fa-solid fa-route"></i>查看课程地图</button>
+        </div>
+      </article>
+
+      <aside class="today-lesson-card panel">
+        <p class="section-kicker">今天只做这些</p>
+        <div class="lesson-focus-list">
+          ${current.unit.goals.map((goal, index) => `
+            <div>
+              <span>${index + 1}</span>
+              <strong>${goal}</strong>
+            </div>
+          `).join("")}
+        </div>
+        <div class="lesson-mini-meta">
+          <span><i class="fa-solid fa-list-check"></i>${lessonExercises.length} 个练习</span>
+          <span><i class="fa-solid fa-pen-nib"></i>${lessonWritingTarget(current.unit)}</span>
+          <span><i class="fa-solid fa-rotate"></i>${state === "review" ? "复习阶段" : "学习阶段"}</span>
+        </div>
+      </aside>
+
+      <section class="beginner-flow panel">
+        <div>
+          <p class="section-kicker">学习顺序</p>
+          <h4>不要一次打开全部功能，按课堂走</h4>
+        </div>
+        <div class="lesson-flow-steps">
+          ${[
+            ["看", "认识本课字母/句型"],
+            ["听", "播放发音，分清易混音"],
+            ["写", "描红，再自己写"],
+            ["练", "做本课小测"],
+            ["复", "复习本课错题"],
+            ["下", "再进入下一课"]
+          ].map((step, index) => `
+            <div class="${state === "review" && index === 4 ? "active" : state === "learn" && index === 0 ? "active" : ""}">
+              <span>${step[0]}</span>
+              <strong>${step[1]}</strong>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="beginner-map-preview panel">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="section-kicker">接下来几课</p>
+            <h4>一课一课解锁</h4>
+          </div>
+          <span class="step-pill">${completedCount}/${sequence.length} 已复习</span>
+        </div>
+        <div class="next-lesson-list">
+          ${sequence.slice(Math.max(0, currentIndex - 1), currentIndex + 5).map(({ level, unit }) => {
+            const itemState = lessonState(unit.id);
+            const locked = !canOpenUnit(unit.id);
+            return `
+              <button class="next-lesson-row ${itemState} ${locked ? "locked" : ""}" ${locked ? "disabled" : ""} data-open-unit="${unit.id}" data-open-mode="${currentLessonModeFor(unit.id)}">
+                <span>${lessonNumber(unit.id)}</span>
+                <div>
+                  <strong>${unit.title}</strong>
+                  <small>${locked ? nextLockedReason(unit.id) : itemState === "done" ? "已学完并复习" : itemState === "review" ? "待复习" : level.title}</small>
+                </div>
+                <em>${itemState === "done" ? "完成" : itemState === "review" ? "复习" : "学习"}</em>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </section>
+
+      <section class="beginner-tools panel">
+        <p class="section-kicker">辅助工具</p>
+        <h4>卡住时再打开</h4>
+        <div class="tool-shortcuts">
+          <button class="control-button" data-view-shortcut="unit1"><i class="fa-solid fa-volume-high"></i>发音训练</button>
+          <button class="control-button" data-view-shortcut="copybook"><i class="fa-solid fa-table-cells-large"></i>手写本</button>
+          <button class="control-button" data-view-shortcut="grammar"><i class="fa-solid fa-book-open"></i>语法库</button>
+          <button class="control-button" data-view-shortcut="vocab"><i class="fa-solid fa-image"></i>单词库</button>
+          <button class="control-button" data-view-shortcut="review"><i class="fa-solid fa-rotate"></i>错题复习</button>
+        </div>
+      </section>
+    </section>
+  `;
+  bindDynamicNavigation(wrap);
+  wrap.querySelector("[data-open-current]")?.addEventListener("click", (event) => {
+    openLesson(event.currentTarget.dataset.openCurrent, event.currentTarget.dataset.openMode);
+  });
+  wrap.querySelectorAll("[data-open-unit]").forEach((button) => {
+    button.addEventListener("click", () => openLesson(button.dataset.openUnit, button.dataset.openMode));
+  });
+}
+
+function renderLearnMap(focusedLevelId = "") {
+  const wrap = document.getElementById("learnMap");
+  if (!wrap) return;
+  const sequence = courseSequence();
+  wrap.innerHTML = `
+    <section class="panel p-5 md:p-6">
+      <p class="section-kicker">课程地图</p>
+      <h3 class="text-3xl font-black mt-1">按教材课型一课一课走</h3>
+      <p class="mt-2" style="color: var(--muted)">每课必须先学完，再复习完，下一课才成为当前任务。这样新手不会在发音、语法、单词之间乱跳。</p>
+      <div class="guided-course-map mt-5">
+        ${sequence.map(({ level, unit }) => {
+          const state = lessonState(unit.id);
+          const locked = !canOpenUnit(unit.id);
+          return `
+            <button class="guided-unit ${state} ${locked ? "locked" : ""} ${level.id === focusedLevelId ? "focus" : ""}" ${locked ? "disabled" : ""} data-open-unit="${unit.id}" data-open-mode="${currentLessonModeFor(unit.id)}">
+              <span class="guided-unit-number">${lessonNumber(unit.id)}</span>
+              <div>
+                <small>${level.title} · ${unit.theme}</small>
+                <strong>${unit.title}</strong>
+                <em>${locked ? nextLockedReason(unit.id) : unit.goals.join(" / ")}</em>
+              </div>
+              <b>${state === "done" ? "已复习" : state === "review" ? "待复习" : locked ? "锁定" : "开始"}</b>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+  wrap.querySelectorAll("[data-open-unit]").forEach((button) => {
+    button.addEventListener("click", () => openLesson(button.dataset.openUnit, button.dataset.openMode));
+  });
+}
+
+function openLesson(unitId, mode = "") {
+  selectedUnitId = unitId || selectedUnitId;
+  selectedLessonMode = mode || currentLessonModeFor(selectedUnitId);
+  renderLessonPage();
+  setView("lesson");
+}
+
+function renderLessonPage() {
+  const wrap = document.getElementById("lessonView");
+  if (!wrap) return;
+  const { level, unit } = findUnitById(selectedUnitId);
+  const lessonExercises = exercisesForUnit(unit.id);
+  const mode = selectedLessonMode || currentLessonModeFor(unit.id);
+  const isReview = mode === "review";
+  const stepLabels = isReview
+    ? ["回看", "再听", "再写", "错题", "复习完成"]
+    : ["目标", "认识", "发音", "手写", "小测", "学完"];
+  wrap.innerHTML = `
+    <section class="classroom-page">
+      <header class="classroom-header panel">
+        <button class="control-button" data-view-shortcut="roadmap"><i class="fa-solid fa-arrow-left"></i>回到当前课程</button>
+        <div>
+          <p class="section-kicker">${level.title} · 第 ${lessonNumber(unit.id)} 课</p>
+          <h3>${isReview ? "复习：" : ""}${unit.title}</h3>
+          <p>${isReview ? "复习这一课的目标、发音和练习。复习完成后，下一课才会出现在首页。" : "只完成这一课，不需要打开其他模块。"}</p>
+        </div>
+        <span class="lesson-time">${Math.max(8, lessonExercises.length * 2)} 分钟</span>
+      </header>
+
+      <div class="classroom-steps">
+        ${stepLabels.map((label, index) => `<span class="${index === 0 ? "active" : ""}">${index + 1}. ${label}</span>`).join("")}
+      </div>
+
+      <div class="classroom-layout">
+        <aside class="lesson-board panel">
+          <p class="section-kicker">本课目标</p>
+          <h4>学完要会这些</h4>
+          <div class="lesson-goals">
+            ${unit.goals.map((goal) => `<span><i class="fa-solid fa-check"></i>${goal}</span>`).join("")}
+          </div>
+          <div class="lesson-board-section">
+            <strong>本课材料</strong>
+            <p>${unit.vocabulary.length ? unit.vocabulary.join(" / ") : "这一课以字母和发音为主"}</p>
+          </div>
+          <div class="lesson-board-section">
+            <strong>本课顺序</strong>
+            <p>看字形 → 听发音 → 手写 → 小测 → 保存完成 → 回首页复习</p>
+          </div>
+          <div class="lesson-board-actions">
+            <button class="control-button" data-view-shortcut="unit1"><i class="fa-solid fa-volume-high"></i>发音工具</button>
+            <button class="control-button" data-view-shortcut="copybook"><i class="fa-solid fa-pen-nib"></i>手写工具</button>
+          </div>
+        </aside>
+
+        <main class="lesson-deck-panel panel">
+          <div id="lessonExerciseDeck"></div>
+        </main>
+      </div>
+    </section>
+  `;
+  bindDynamicNavigation(wrap);
+  ExerciseRenderer.renderDeck(document.getElementById("lessonExerciseDeck"), lessonExercises, {
+    unitId: unit.id,
+    onComplete: () => {
+      if (isReview) {
+        markLessonReviewComplete(unit.id);
+        toast("本课复习完成，可以进入下一课。");
+      } else {
+        toast("本课已完成。请先复习这一课，再进入下一课。");
+      }
+      renderDashboard();
+      renderLearnMap();
+      renderStatsPage();
+    }
+  });
+}
+
 function renderGrammarTrackPage() {
   const wrap = document.getElementById("grammarTrackView");
   if (!wrap) return;
+  const totalPoints = grammarPracticeSummary?.totalPoints || grammarTrack.length;
+  const fullPoints = grammarPracticeSummary?.fullPoints || 15;
+  const totalDrills = grammarPracticeSummary?.totalDrills || grammarTrack.reduce((sum, point) => sum + (point.drills || point.exercises || []).length, 0);
+  const topikCount = Array.isArray(topikQuestionBank) ? topikQuestionBank.length : 0;
+  const verbCount = Array.isArray(verbConjugationTrack) ? verbConjugationTrack.length : 0;
   wrap.innerHTML = `
     <div class="grammar-layout">
       <section class="panel p-5 md:p-6">
-        <p class="section-kicker">GrammarTrack</p>
-        <h3 class="text-3xl font-black mt-1">25 个基础语法点</h3>
-        <p class="mt-2" style="color: var(--muted)">前 8 个已经有可用练习页；后续语法先保留结构，方便继续扩展。</p>
+        <p class="section-kicker">Grammar Track</p>
+        <h3 class="text-3xl font-black mt-1">${totalPoints} 个基础语法点</h3>
+        <p class="mt-2" style="color: var(--muted)">前 ${fullPoints} 个已做完整讲解与练习；当前共有 ${totalDrills} 道语法练习，另有 ${verbCount} 个动词变形和 ${topikCount} 道 TOPIK I 风格原创题。</p>
+        <div class="grammar-count-grid mt-4">
+          ${statCard("完整语法点", "grammarFullCount", `${fullPoints}/${totalPoints}`)}
+          ${statCard("语法练习", "grammarDrillCount", totalDrills)}
+          ${statCard("动词词条", "grammarVerbCount", verbCount)}
+          ${statCard("TOPIK 题", "grammarTopikCount", topikCount)}
+        </div>
         <div class="grammar-track-list mt-5">
           ${grammarTrack.map((point, index) => `
-            <button class="grammar-point ${index < 8 ? "ready" : ""}" data-grammar-id="${point.id}">
+            <button class="grammar-point ${index < fullPoints ? "ready" : ""}" data-grammar-id="${point.id}">
               <span>${index + 1}</span>
               <strong>${point.title}</strong>
-              <small>${point.oneLine}</small>
+              <small>${grammarCategoryLabel(point.category)} · ${point.oneLine}</small>
             </button>
           `).join("")}
         </div>
@@ -959,37 +1239,75 @@ function renderGrammarTrackPage() {
         <div id="grammarPracticeDeck" class="mt-4"></div>
       </section>
     </div>
+    <div class="grammar-extra-layout mt-4">
+      <section id="verbTrainingView" class="panel p-5 md:p-6"></section>
+      <section id="topikPracticeView" class="panel p-5 md:p-6"></section>
+    </div>
   `;
   wrap.querySelectorAll("[data-grammar-id]").forEach((button) => {
-    button.addEventListener("click", () => renderGrammarPoint(button.dataset.grammarId));
+    button.addEventListener("click", () => {
+      wrap.querySelectorAll("[data-grammar-id]").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      renderGrammarPoint(button.dataset.grammarId);
+    });
   });
+  wrap.querySelector("[data-grammar-id]")?.classList.add("active");
   renderGrammarPoint(grammarTrack[0].id);
+  renderVerbTrainingBlock();
+  renderTopikPracticeBlock();
 }
 
 function renderGrammarPoint(grammarId) {
   const point = grammarTrack.find((item) => item.id === grammarId) || grammarTrack[0];
   const detail = document.getElementById("grammarPointDetail");
   if (!detail) return;
+  const examples = point.examples || [];
+  const usage = point.usage || [];
+  const formation = point.formation || [];
+  const mistakes = point.commonMistakes || [];
+  const comparisons = point.comparison || [];
   detail.innerHTML = `
-    <p class="section-kicker">${point.titleEn || "Grammar"}</p>
+    <p class="section-kicker">${grammarCategoryLabel(point.category)} · ${point.titleEn || "Grammar"}</p>
     <h3 class="text-3xl font-black mt-1">${point.title}</h3>
     <p class="mt-2 font-black">${point.oneLine}</p>
     <div class="formula-card mt-3">${point.formula}</div>
-    <div class="example-list mt-3">
-      ${(point.examples || []).slice(0, 3).map((example) => `
-        <div>
-          <strong lang="ko">${example.ko}</strong>
-          <span>${example.literalZh}</span>
-          <em>${example.naturalZh}</em>
-        </div>
-      `).join("") || `<p style="color: var(--muted)">这个语法点已有结构，练习页会在后续补全。</p>`}
+    <div class="grammar-detail-grid mt-4">
+      <article class="grammar-info-card">
+        <strong>使用规则</strong>
+        <ul>${usage.map((item) => `<li>${item}</li>`).join("") || "<li>先看公式，再用例句理解。</li>"}</ul>
+      </article>
+      <article class="grammar-info-card">
+        <strong>构成方式</strong>
+        <ul>${formation.map((item) => `<li>${item}</li>`).join("") || "<li>把结构放进完整句子里练习。</li>"}</ul>
+      </article>
     </div>
-    <div class="mistake-note mt-3"><i class="fa-solid fa-triangle-exclamation"></i>${point.commonMistake}</div>
+    <div class="example-list grammar-example-list mt-4">
+      ${examples.slice(0, 4).map((example) => `
+        <div>
+          <strong lang="ko">${example.ko || example.korean}</strong>
+          <span>${example.romanization || ""}</span>
+          <span>${example.literalZh || example.literalChinese || ""}</span>
+          <em>${example.naturalZh || example.naturalChinese || ""}</em>
+          ${example.note ? `<small>${example.note}</small>` : ""}
+        </div>
+      `).join("") || `<p style="color: var(--muted)">这个语法点已有结构，练习会继续扩展。</p>`}
+    </div>
+    ${comparisons.length ? `
+      <div class="grammar-info-card mt-4">
+        <strong>对比说明</strong>
+        ${comparisons.map((item) => `
+          <p class="mt-2"><b>${item.pointA}</b> vs <b>${item.pointB}</b>：${item.explanation}</p>
+          <p class="grammar-mini-examples">${(item.examples || []).join(" / ")}</p>
+        `).join("")}
+      </div>
+    ` : ""}
+    <div class="mistake-note mt-4"><i class="fa-solid fa-triangle-exclamation"></i><span>${mistakes.map((item) => `${item.mistake} → ${item.correction}。${item.explanation}`).join("<br>") || point.commonMistake}</span></div>
+    ${(point.relatedVocabulary || []).length ? `<div class="related-vocab mt-4">${point.relatedVocabulary.map((word) => `<span>${word}</span>`).join("")}</div>` : ""}
   `;
-  const exercises = (point.exercises || []).map((exercise) => ({
+  const exercises = (point.drills || point.exercises || []).map((exercise) => ({
     ...exercise,
     unitId: point.id,
-    errorTags: [point.masteryTag || "grammar"]
+    errorTags: exercise.errorTags || exercise.tags || point.reviewTags || [point.masteryTag || "grammar"]
   }));
   const deck = document.getElementById("grammarPracticeDeck");
   if (exercises.length) {
@@ -1005,6 +1323,72 @@ function renderGrammarPoint(grammarId) {
   } else {
     deck.innerHTML = `<div class="lesson-summary-card"><p>基础结构已建立，练习将在下一轮扩展。</p></div>`;
   }
+}
+
+function renderVerbTrainingBlock() {
+  const wrap = document.getElementById("verbTrainingView");
+  if (!wrap) return;
+  const verbs = Array.isArray(verbConjugationTrack) ? verbConjugationTrack : [];
+  const drills = Array.isArray(verbDrills) ? verbDrills.slice(0, 18) : [];
+  wrap.innerHTML = `
+    <p class="section-kicker">Verb Lab</p>
+    <h3 class="text-3xl font-black mt-1">动词变形训练</h3>
+    <p class="mt-2" style="color: var(--muted)">先把常用动词的现在时、过去式、将来、否定、想做、正在做练熟。这里是原创练习，不是背一张死表。</p>
+    <div class="verb-grid mt-4">
+      ${verbs.slice(0, 8).map((verb) => `
+        <article class="verb-card">
+          <div>
+            <strong lang="ko">${verb.dictionary}</strong>
+            <span>${verb.roman} · ${verb.meaningZh}</span>
+          </div>
+          <dl>
+            <dt>现在</dt><dd lang="ko">${verb.present}</dd>
+            <dt>过去</dt><dd lang="ko">${verb.past}</dd>
+            <dt>将来</dt><dd lang="ko">${verb.future}</dd>
+            <dt>否定</dt><dd lang="ko">${verb.negative}</dd>
+          </dl>
+        </article>
+      `).join("")}
+    </div>
+    <div id="verbPracticeDeck" class="mt-4"></div>
+  `;
+  if (drills.length) {
+    ExerciseRenderer.renderDeck(document.getElementById("verbPracticeDeck"), drills.map((exercise) => ({
+      ...exercise,
+      unitId: "verb-conjugation"
+    })), { unitId: "verb-conjugation" });
+  }
+}
+
+function renderTopikPracticeBlock() {
+  const wrap = document.getElementById("topikPracticeView");
+  if (!wrap) return;
+  const questions = Array.isArray(topikQuestionBank) ? topikQuestionBank.slice(0, 24) : [];
+  wrap.innerHTML = `
+    <p class="section-kicker">TOPIK I</p>
+    <h3 class="text-3xl font-black mt-1">TOPIK 风格原创题</h3>
+    <p class="mt-2" style="color: var(--muted)">练助词、语序、名词句、阅读短文和对话选择。题目按 TOPIK I 风格原创编写，不复制真题。</p>
+    <div id="topikPracticeDeck" class="mt-4"></div>
+  `;
+  if (questions.length) {
+    ExerciseRenderer.renderDeck(document.getElementById("topikPracticeDeck"), questions.map((exercise) => ({
+      ...exercise,
+      unitId: "topik-i-basic"
+    })), { unitId: "topik-i-basic" });
+  }
+}
+
+function grammarCategoryLabel(category) {
+  const labels = {
+    sentence: "句子结构",
+    particle: "助词",
+    verb: "动词/形容词",
+    noun: "名词",
+    number: "数字",
+    honorific: "敬语",
+    expression: "常用表达"
+  };
+  return labels[category] || "语法";
 }
 
 function renderStatsPage() {

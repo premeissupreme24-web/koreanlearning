@@ -56,11 +56,22 @@ const ExerciseRenderer = {
   renderExercise(container, exercise) {
     if (!container) return;
     const type = exercise.type || "multiple-choice";
-    if (["multiple-choice", "listen-choice", "image-choice", "fill-blank", "grammar-choice", "dialogue-simulation"].includes(type)) {
+    if ([
+      "multiple-choice",
+      "listen-choice",
+      "image-choice",
+      "fill-blank",
+      "grammar-choice",
+      "dialogue-simulation",
+      "particle-choice",
+      "conjugation",
+      "meaning-choice",
+      "error-correction"
+    ].includes(type)) {
       this.renderChoice(container, exercise);
       return;
     }
-    if (type === "sentence-builder" || type === "syllable-builder") {
+    if (type === "sentence-builder" || type === "syllable-builder" || type === "reorder") {
       this.renderBuilder(container, exercise);
       return;
     }
@@ -89,6 +100,7 @@ const ExerciseRenderer = {
       : "";
     container.innerHTML = `
       <div class="exercise-prompt-card">
+        ${exercise.passage ? `<pre class="topik-passage">${escapeHtml(exercise.passage)}</pre>` : ""}
         ${imageMarkup}
         <p class="exercise-korean" lang="ko">${exercise.korean || ""}</p>
         <p style="color: var(--muted)">${exercise.chinese || ""}</p>
@@ -108,6 +120,7 @@ const ExerciseRenderer = {
     const pieces = shuffle([...(exercise.options || [])]);
     container.innerHTML = `
       <div class="exercise-prompt-card">
+        ${exercise.passage ? `<pre class="topik-passage">${escapeHtml(exercise.passage)}</pre>` : ""}
         <p class="exercise-korean" lang="ko">${exercise.korean || ""}</p>
         <p style="color: var(--muted)">${exercise.chinese || "点选字块组成答案。"}</p>
       </div>
@@ -136,7 +149,11 @@ const ExerciseRenderer = {
       paint();
     });
     container.querySelector("[data-builder-check]").addEventListener("click", () => {
-      this.checkAnswer(selected.join("|"), exercise, container);
+      const normalizedExercise = {
+        ...exercise,
+        answer: Array.isArray(exercise.answer) ? exercise.answer.join("|") : exercise.answer
+      };
+      this.checkAnswer(selected.join("|"), normalizedExercise, container);
     });
   },
 
