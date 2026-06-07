@@ -24,6 +24,7 @@ const ExerciseRenderer = {
         });
         return;
       }
+      const displayPrompt = this.displayPrompt(exercise);
 
       container.innerHTML = `
         <div class="exercise-shell">
@@ -31,7 +32,7 @@ const ExerciseRenderer = {
             <button class="control-button" data-ex-prev ${state.index === 0 ? "disabled" : ""}><i class="fa-solid fa-arrow-left"></i>上一步</button>
             <div>
               <p class="section-kicker">Step ${state.index + 1} / ${exercises.length}</p>
-              <h4 class="text-2xl font-black mt-1">${exercise.prompt}</h4>
+              <h4 class="text-2xl font-black mt-1">${escapeHtml(displayPrompt)}</h4>
             </div>
             <button class="control-button primary" data-ex-next>下一步<i class="fa-solid fa-arrow-right"></i></button>
           </div>
@@ -90,6 +91,16 @@ const ExerciseRenderer = {
       return;
     }
     this.renderChoice(container, exercise);
+  },
+
+  displayPrompt(exercise) {
+    const prompt = exercise.prompt || "";
+    if (exercise.type !== "listen-choice") return prompt;
+    if (hasChineseText(exercise.answer) || (exercise.options || []).some(hasChineseText)) {
+      return "听音，选择对应意思。";
+    }
+    if (prompt.includes("收音")) return "听音，选择正确收音。";
+    return "听音，选择你听到的音。";
   },
 
   shouldShowPromptKorean(exercise) {
@@ -349,7 +360,7 @@ const ExerciseRenderer = {
       exerciseId: exercise.id,
       unitId: exercise.unitId,
       itemType: exercise.type,
-      prompt: exercise.prompt,
+      prompt: this.displayPrompt(exercise),
       correctAnswer: exercise.answer,
       userAnswer,
       choices: exercise.options || [],
@@ -389,6 +400,10 @@ const ExerciseRenderer = {
 
 function normalizeAnswer(value) {
   return String(value || "").replace(/\s+/g, "").replace(/[.。?？]/g, "").toLowerCase();
+}
+
+function hasChineseText(value) {
+  return /[\u3400-\u9fff]/.test(String(value || ""));
 }
 
 function escapeHtml(value) {
