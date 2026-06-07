@@ -92,8 +92,28 @@ const ExerciseRenderer = {
     this.renderChoice(container, exercise);
   },
 
+  shouldShowPromptKorean(exercise) {
+    if (!exercise.korean) return false;
+    if (exercise.type === "listen-choice") return false;
+    return normalizeAnswer(exercise.korean) !== normalizeAnswer(exercise.answer);
+  },
+
+  promptNote(exercise, showPromptKorean) {
+    if (!exercise.chinese) return "";
+    if (exercise.type === "listen-choice") return "";
+    if (!showPromptKorean && normalizeAnswer(exercise.korean) === normalizeAnswer(exercise.answer)) return "";
+    if (!showPromptKorean && normalizeAnswer(exercise.chinese) === normalizeAnswer(exercise.answer)) return "";
+    return exercise.chinese;
+  },
+
   renderChoice(container, exercise) {
     const options = shuffle([...(exercise.options || [])]);
+    const showPromptKorean = this.shouldShowPromptKorean(exercise);
+    const promptText = exercise.type === "listen-choice" ? "先听声音，再选择答案。" : "先看题目，再选择答案。";
+    const promptKoreanMarkup = showPromptKorean
+      ? `<p class="exercise-korean" lang="ko">${escapeHtml(exercise.korean)}</p>`
+      : `<p class="exercise-korean prompt-placeholder">${promptText}</p>`;
+    const note = this.promptNote(exercise, showPromptKorean);
     const imageMarkup = exercise.type === "image-choice"
       ? `<div class="exercise-picture">${exercise.imageEmoji && String(exercise.imageEmoji).startsWith("#") ? `<span class="swatch" style="background:${exercise.imageEmoji}"></span>` : (exercise.imageEmoji || "📝")}</div>`
       : "";
@@ -104,8 +124,8 @@ const ExerciseRenderer = {
       <div class="exercise-prompt-card">
         ${exercise.passage ? `<pre class="topik-passage">${escapeHtml(exercise.passage)}</pre>` : ""}
         ${imageMarkup}
-        <p class="exercise-korean" lang="ko">${exercise.korean || ""}</p>
-        <p style="color: var(--muted)">${exercise.chinese || ""}</p>
+        ${promptKoreanMarkup}
+        ${note ? `<p style="color: var(--muted)">${escapeHtml(note)}</p>` : ""}
         ${listenMarkup}
       </div>
       <div class="exercise-options">

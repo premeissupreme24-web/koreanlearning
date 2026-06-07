@@ -209,7 +209,7 @@ function createVocabularyExercises() {
         id: `vocab-${index + 1}-listen`,
         unitId: "practice-vocabulary",
         type: "listen-choice",
-        prompt: `听韩文，选择中文意思：${item.ko}`,
+        prompt: "听韩文，选择中文意思。",
         korean: item.ko,
         chinese: item.meaningZh,
         options: meaningOptions,
